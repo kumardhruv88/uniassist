@@ -69,11 +69,11 @@ LLM: **Ollama `llama3.1:8b`** (already pulled on this machine). `[x]` = built, `
 - [x] AI-usage disclosure (`AI_USAGE.md`: development tools, runtime models, generated data; team review section to fill)
 - [x] Team contribution statement (`CONTRIBUTIONS.md`: Garv = frontend, Manish = LangGraph orchestration, Dhruv = eval + production RAG; rest to fill)
 - [x] Signed declaration of original work (`DECLARATION.md`, to sign)
-- [~] GitHub: push to https://github.com/kumardhruv88/uniassist (public, empty) as garvbahl37-gif; each commit authored by the member who prompted that part, using their public no-reply address; Claude co-author trailer on every commit; dates not backdated
-  - Stage 1, core end-to-end build (ingestion, retrieval, precedence, tools, LangGraph pipeline, API, Docker, core tests): Manish Kumar (GitHub username needed)
-  - Stage 2, production-RAG layer + synthetic data + golden dataset + eval + design docs: Dhruv Kumar (`kumardhruv88`, ID 192673966)
-  - Frontend UI/UX: Garv Bahl (`garvbahl37-gif`, ID 230734829)
-  - Before pushing: confirm the split, get Manish's username, confirm garvbahl37-gif has write access to the repo
+- [~] GitHub: https://github.com/kumardhruv88/uniassist (public). History authored per member with GitHub no-reply addresses and the Claude co-author trailer; dates not backdated
+  - Manish Kumar (`m4nish-dev`): 13 commits, the core end-to-end build including LangGraph orchestration
+  - Dhruv Kumar (`kumardhruv88`): production-RAG layer, synthetic data, golden dataset + eval, docs
+  - Garv Bahl (`garvbahl37-gif`): frontend UI/UX
+  - Branches `garv`, `dhruv`, `manish` created from `main` for each member's work; merge back through pull requests
 - [ ] Rotate the GitHub tokens shared during setup
 
 ## Guide §9: judging readiness
