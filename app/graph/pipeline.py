@@ -25,7 +25,7 @@ from app import audit, cache, metrics
 from app.conversation import Turn, contextualize, sessions
 from app.db import data_version, one, rows, session
 from app.graph.verify import (check_draft, evidence_coverage, groundedness, infer_citations, numbers, says_not_covered,
-                              sources_for_grounding, strip_markers)
+                              sources_for_grounding, strip_markers, unsupported_negative)
 from app.ingestion.injection import redact
 from app.llm.client import LLMError
 from app.llm.composer import ComposerOutput, build_prompt, facts_from_tools
@@ -358,6 +358,10 @@ def build_graph(svc: Services):
             problems = check_draft(draft, evidence_ids=shown, allowed_sources=sources, verdict=verdict,
                                    self_id=(state.get("student") or {}).get("student_id"), needs_citation=verdict is None,
                                    personal=bool(p and p.category in PERSONAL))
+            cited = [e.text for e in shown_ev if e.eid in draft.evidence_ids]
+            if verdict is None and not draft.insufficient_evidence and unsupported_negative(draft.answer, cited):
+                problems.append("the answer says something is not needed or optional, but the cited evidence never says "
+                                "that; answer only what the evidence states, or set insufficient_evidence")
             if not draft.insufficient_evidence:
                 score, unsupported = groundedness(f"{draft.answer} {draft.explanation}",
                                                   sources + [e.title for e in shown_ev] + _notes(state))
@@ -450,8 +454,10 @@ def build_graph(svc: Services):
                                                 others=[SourceRef(doc_id=e.doc_id, section=e.section, title=e.title,
                                                                   value=", ".join(sorted(amounts(e.text))) or None) for e in (a, b)]))
             answer = f"The sources disagree: {said}. Both have the same authority and date, so please confirm with {issuer}."
-            explanation = (strip_markers(draft.explanation) if draft and not fallback else
-                           "Annex A cannot break this tie, so both sources are cited.")
+            # code-owned: a model explanation written before the tie was found may pick one side
+            explanation = ("Both sources have the same authority level and take effect on the same date, so the precedence "
+                           "rules cannot choose between them. Treat the value as unconfirmed until the issuing office "
+                           "says which one applies.")
         elif decisive:                   # calculated = from the student's records; a policy what-if is a retrieved fact
             personal = any(t.decisive and t.status == "ok" and TOOLS[t.tool].personal for t in tool_results)
             answer_type, answer = ("calculated" if personal else "retrieved_fact"), verdict or ""

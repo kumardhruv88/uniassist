@@ -64,6 +64,9 @@ def parse_pdf(data: bytes) -> Parsed:
             for t in page.find_tables().tables:
                 grid = [[_clean(c) for c in row] for row in t.extract()]
                 grid = [r for r in grid if any(r)]
+                if _is_register_table(grid):            # the document's own metadata header, not policy content
+                    boxes.append(fitz.Rect(t.bbox))
+                    continue
                 if len(grid) >= 2:
                     markers.append((t.bbox[1], f"{TABLE_MARK}{len(out.tables)}"))
                     out.tables.append(Table(i, grid[0], grid[1:]))
@@ -81,8 +84,36 @@ def parse_pdf(data: bytes) -> Parsed:
                 out.pages.append(Page(i, _ocr_image(img), ocr=True))
                 continue
             out.warnings.append(f"page {i} has no text layer and OCR is unavailable (install tesseract)")
-        out.pages.append(Page(i, text))
+        # a page that mixes printed text with a scanned image (a stamped notice, a pasted scan): read the image too
+        area = abs(page.rect)
+        scans = [fitz.Rect(b["bbox"]) for b in page.get_text("dict")["blocks"]
+                 if b.get("type") == 1 and abs(fitz.Rect(b["bbox"])) >= 0.12 * area]
+        ocr_used = False
+        for bbox in scans:
+            if not can_ocr:
+                out.warnings.append(f"page {i} contains a scanned image whose text was not read: OCR is unavailable "
+                                    f"(install tesseract)")
+                break
+            from PIL import Image
+            img = Image.open(io.BytesIO(page.get_pixmap(dpi=300, clip=bbox).tobytes("png")))
+            scanned = _ocr_image(img).strip()
+            if scanned:
+                items.append((bbox.y0, scanned))
+                ocr_used = True
+        if ocr_used:
+            text = "\n".join(t for _, t in sorted(items, key=lambda x: x[0]))
+        out.pages.append(Page(i, text, ocr=ocr_used))
     return out
+
+
+REGISTER_LABELS = {"document id", "authority level", "document type", "effective from", "effective to", "scope",
+                   "supersedes", "issuer", "doc id", "version"}
+
+
+def _is_register_table(grid: list[list[str]]) -> bool:
+    """A two-column 'Document ID | ACAD-2026-08' header table: Annex B metadata, which the register already holds."""
+    labels = {row[0].strip().lower() for row in grid if row and row[0]}
+    return len(labels & REGISTER_LABELS) >= 4
 
 
 def parse_docx(data: bytes) -> Parsed:

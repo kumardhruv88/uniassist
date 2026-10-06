@@ -171,3 +171,13 @@ def says_not_covered(answer: str, evidence_text: str = "") -> bool:
     from app.retrieval.query import terms
     subject = terms(m.group(1))
     return bool(subject) and subject[0] not in set(terms(evidence_text))
+
+
+NEG_CLAIM = re.compile(r"\b(?:do(?:es)? not need|don'?t need|doesn'?t need|need not|no need to|not required|not mandatory|"
+                       r"not necessary|does not matter|doesn'?t matter|is optional|are optional)\b", re.I)
+NEG_WORD = re.compile(r"\b(?:no|not|none|never|cannot|without|optional|exempt\w*|waived|need not)\b", re.I)
+
+
+def unsupported_negative(answer: str, cited_texts: list[str]) -> bool:
+    """'You do not need to attend …' when no cited clause says anything negative: a claim the model made up."""
+    return bool(NEG_CLAIM.search(answer)) and not any(NEG_WORD.search(t) for t in cited_texts)
