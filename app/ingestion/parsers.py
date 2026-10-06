@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import io
 import shutil
+import unicodedata
 from dataclasses import dataclass, field
 
 
@@ -125,14 +126,27 @@ def parse_image(data: bytes) -> Parsed:
     return out
 
 
+def _normalise(text: str) -> str:
+    """NFKC folds typographic ligatures (ﬁ ﬂ ﬀ ﬃ), full-width characters and non-breaking spaces that PDF exports
+    contain, so 'eﬀect' matches 'effect' in BM25, claim extraction and the prompt. Soft hyphens are dropped."""
+    return unicodedata.normalize("NFKC", text).replace("\u00ad", "")
+
+
 def parse(data: bytes, ext: str) -> Parsed:
     ext = ext.lower()
     if ext == ".pdf":
-        return parse_pdf(data)
-    if ext == ".docx":
-        return parse_docx(data)
-    if ext in (".html", ".htm"):
-        return parse_html(data)
-    if ext in (".png", ".jpg", ".jpeg"):
-        return parse_image(data)
-    return Parsed(pages=[Page(1, data.decode("utf-8", errors="replace"))])
+        out = parse_pdf(data)
+    elif ext == ".docx":
+        out = parse_docx(data)
+    elif ext in (".html", ".htm"):
+        out = parse_html(data)
+    elif ext in (".png", ".jpg", ".jpeg"):
+        out = parse_image(data)
+    else:
+        out = Parsed(pages=[Page(1, data.decode("utf-8", errors="replace"))])
+    for pg in out.pages:
+        pg.text = _normalise(pg.text)
+    for t in out.tables:
+        t.header = [_normalise(h) for h in t.header]
+        t.rows = [[_normalise(c) for c in row] for row in t.rows]
+    return out

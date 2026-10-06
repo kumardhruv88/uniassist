@@ -35,8 +35,12 @@ Rules:
    (for example a pet, a bus route, a scholarship), set insufficient_evidence to true. Never answer "yes" or
    "no" unless the evidence says so.
    If it answers only part, answer that part and list the rest in unanswered_parts.
+   If the question names no variant and the evidence lists several (for example twin and single rooms, or a fee
+   per category), give every one of them.
+   If RULES APPLIED lists the rule the question is about, state its value.
 6. If two TIED evidence blocks state different values for the same thing, add their ids to disagreeing_pairs.
-7. answer: one or two complete sentences that directly answer the question, never a single word.
+7. Refer to clauses as "section 7.2", never with the § symbol.
+   answer: one or two complete sentences that directly answer the question, never a single word.
    explanation: two to four sentences, plain language, no reasoning steps, no headings. Write to the student as "you"."""
 
 
@@ -45,7 +49,7 @@ LEVEL = {1: "regulation", 2: "circular", 3: "notice", 4: "faq", 5: "unofficial"}
 
 def _fmt_ev(e: Evidence) -> str:
     """Compact tag: only the attributes the rules above refer to (prompt tokens are latency on a local model)."""
-    sec = f" §=\"{e.section}\"" if e.section else ""
+    sec = f" section=\"{e.section}\"" if e.section else ""
     text = redact(e.text) if e.flagged else e.text
     return (f"<evidence id=\"{e.eid}\" doc=\"{e.title}\"{sec} level=\"{LEVEL[e.authority]}\" "
             f"from=\"{e.effective_from}\" label=\"{e.label}\">\n{text[:1600]}\n</evidence>")

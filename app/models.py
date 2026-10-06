@@ -1,4 +1,4 @@
-"""API contract (guide §6) plus additive fields. Pydantic v2."""
+"""API contract (guide section 6) plus additive fields. Pydantic v2."""
 from __future__ import annotations
 
 import re
@@ -76,6 +76,8 @@ class AskMeta(BaseModel):
     llm_calls: int = 0
     tokens: int = 0
     tokens_saved: int = 0                        # evidence tokens removed by context optimisation
+    as_of_source: str | None = None              # request | question ("As of 2026-12-10, …") | today
+    scope: str | None = None                     # the programme/batch rules were resolved for, and where it came from
 
 
 class AskResponse(BaseModel):

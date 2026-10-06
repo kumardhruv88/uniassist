@@ -12,3 +12,5 @@ data/runtime-*/
 .ruff_cache/
 .mypy_cache/
 frontend/test-results/
+eval/adversarial/server.log
+eval/adversarial/results/

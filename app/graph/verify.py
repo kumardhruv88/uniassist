@@ -35,11 +35,12 @@ def numbers(text: str) -> set[str]:
 
 
 def strip_markers(text: str) -> str:
+    text = re.sub(r"§+\s*", "section ", text)            # plain words for students, not the section sign
     return re.sub(r"\s{2,}", " ", re.sub(r"\s*\[(?:E\d{1,2}(?:\s*,\s*)?)+\]", "", text)).strip()
 
 
 def check_draft(draft, *, evidence_ids: set[str], allowed_sources: list[str], verdict: str | None,
-                self_id: str | None, needs_citation: bool) -> list[str]:
+                self_id: str | None, needs_citation: bool, personal: bool = True) -> list[str]:
     problems: list[str] = []
     cited = [e for e in draft.evidence_ids if e in evidence_ids]
     bogus = [e for e in draft.evidence_ids if e not in evidence_ids]
@@ -52,7 +53,7 @@ def check_draft(draft, *, evidence_ids: set[str], allowed_sources: list[str], ve
     unknown = sorted(n for n in numbers(text) if n not in allowed and not (n.isdigit() and int(n) <= 10))
     if unknown:
         problems.append(f"these numbers are not in the verdict, records, rules or evidence: {', '.join(unknown)}")
-    if verdict is None and ELIG.search(text):
+    if verdict is None and personal and ELIG.search(text):     # a policy answer may quote "not eligible" from a clause
         problems.append("do not state eligibility: no verdict was computed for this question")
     problems += [f"false comparison: '{c}'" for c in false_comparisons(text)]
     others = {s for s in SID.findall(text) if s != self_id}
@@ -113,7 +114,8 @@ def false_comparisons(text: str) -> list[str]:
 
 GENERIC = STOP | set("student students university college course courses exam exams examination semester rule rules "
                      "policy please tell know about there much many more what which minimum maximum required "
-                     "need allowed get give take".split())
+                     "need allowed get give take does did should would could now then still yet ever just "
+                     "cost costs price charge charges".split())
 
 
 def evidence_coverage(question: str, evidence) -> float:
@@ -149,3 +151,23 @@ def groundedness(text: str, sources: list[str]) -> tuple[float, list[str]]:
         if best < 0.5 and len(st & pool) / len(st) < 0.75:
             unsupported.append(snt)
     return round(1 - len(unsupported) / len(sents), 3), unsupported
+
+
+ABSENCE = re.compile(r"\b(?:no|not)\b[^.]{0,30}?\b(?:mention(?:ed)?|information|details?|specified|stated|provided|found)\b"
+                     r"|\b(?:does not|doesn't|do not|don't|did not)\s+(?:mention|say|specify|state|cover|include|provide)\b", re.I)
+
+
+NO_SUCH = re.compile(r"^\s*(?:no[,.]?\s+)?there (?:is|are) no\s+(?:specific\s+|such\s+|separate\s+)?([a-z][a-z-]+)", re.I)
+
+
+def says_not_covered(answer: str, evidence_text: str = "") -> bool:
+    """'There is no scholarship mentioned for …' is an abstention, whatever the model labelled it. A flat
+    'There is no X' counts as one too when X never appears in the cited evidence (nothing to support the claim)."""
+    if ABSENCE.search(answer):
+        return True
+    m = NO_SUCH.search(answer)
+    if not m:
+        return False
+    from app.retrieval.query import terms
+    subject = terms(m.group(1))
+    return bool(subject) and subject[0] not in set(terms(evidence_text))

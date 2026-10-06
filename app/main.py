@@ -1,4 +1,4 @@
-"""FastAPI app: the fixed contract (guide §6) plus a few additive read endpoints for the UI."""
+"""FastAPI app: the fixed contract (guide section 6) plus a few additive read endpoints for the UI."""
 from __future__ import annotations
 
 import csv

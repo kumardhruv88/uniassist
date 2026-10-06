@@ -24,7 +24,7 @@ from pydantic import ValidationError
 from app import audit, cache, metrics
 from app.conversation import Turn, contextualize, sessions
 from app.db import data_version, one, rows, session
-from app.graph.verify import (check_draft, evidence_coverage, groundedness, infer_citations, numbers,
+from app.graph.verify import (check_draft, evidence_coverage, groundedness, infer_citations, numbers, says_not_covered,
                               sources_for_grounding, strip_markers)
 from app.ingestion.injection import redact
 from app.llm.client import LLMError
@@ -34,8 +34,8 @@ from app.llm.planner import PERSONAL, Plan, attendance_whatif, plan_question, ro
 from app.models import AppliedRule, AskMeta, AskResponse, Citation, ConflictRecord, SourceRef, ToolInvocation
 from app.policy.precedence import StudentScope
 from app.policy.rules import PARAMETERS
-from app.retrieval.query import canonical
-from app.retrieval.retriever import Evidence, RetrievalResult, retrieve
+from app.retrieval.query import canonical, question_date, question_scope
+from app.retrieval.retriever import Evidence, RetrievalResult, amounts, retrieve
 from app.security.guardrails import REFUSALS, check_input, check_output, redact_pii
 from app.services import Services
 from app.tools.core import TOOLS, ToolContext, resolve_course, run_tool, student_courses
@@ -44,6 +44,8 @@ NOT_FOUND = "I could not find this information in the authorised university sour
 OTHER_STUDENT = ("I can only share your own records, so I can't answer questions about another student.",
                  "Personal records are available only to the student who is signed in.")
 AVAILABILITY = ("unavailable", "timeout")
+THRESHOLD_Q = re.compile(r"\b(?:minimum|maximum|min|max|threshold|cut-?off|required|requirement|at least|"
+                         r"what percentage|how much attendance|which rule|what rule|limit)\b")
 CACHEABLE = ("retrieved_fact", "calculated", "conflict_flagged", "not_found")
 
 
@@ -59,6 +61,7 @@ class AskState(TypedDict, total=False):
     session_id: str | None
     header_student_id: str | None
     as_of: date
+    as_of_source: str
     started: float
     student: dict | None
     unknown_identity: bool
@@ -103,6 +106,18 @@ def _name_in(full_name: str, q: str) -> bool:
         return False
     ql = q.lower()
     return all(re.search(rf"\b{re.escape(t.lower())}\b", ql) for t in (toks[0], toks[-1]))
+
+
+def _policy_scope(state: "AskState") -> tuple[StudentScope | None, str]:
+    """Rules and documents are read for the programme/batch the question names ("for B.Arch batch 2025"), unless the
+    question is about the student's own records: personal tools always use the signed-in student's scope."""
+    p = state.get("plan")
+    if p is None or p.category not in PERSONAL:
+        qs = question_scope(state["question"])
+        if qs:
+            return qs, "question"
+    student = state.get("student")
+    return _scope(student), ("student" if student else "none")
 
 
 def _find_courses(question: str, courses: list[dict]) -> list[str]:
@@ -215,6 +230,7 @@ def build_graph(svc: Services):
         results = []
         with session() as con:
             ctx = ToolContext(con, state.get("student"), state["as_of"])
+            pctx = ToolContext(con, state.get("student"), state["as_of"], scope_override=_policy_scope(state)[0])
             for t in p.tools:
                 kwargs: dict[str, Any] = {}
                 if TOOLS[t].needs_course:
@@ -225,11 +241,11 @@ def build_graph(svc: Services):
                     kwargs["future_classes"] = p.future_classes or 10
                 results.append(run_tool(t, ctx, **kwargs))
             if state.get("whatif"):
-                results.append(run_tool("check_attendance_value", ctx, **state["whatif"]))
+                results.append(run_tool("check_attendance_value", pctx, **state["whatif"]))
             consulted = {rr.parameter for r in results for rr in r.rules}
             for param in p.rule_parameters:
                 if param not in consulted:
-                    results.append(run_tool("get_rule", ctx, parameter=param))
+                    results.append(run_tool("get_rule", pctx, parameter=param))
         return {"tool_results": results, "rule_results": [rr for r in results for rr in r.rules]}
 
     # ------------------------------------------------------------------ 5 retrieve
@@ -241,7 +257,7 @@ def build_graph(svc: Services):
                 anchors.append((c.doc_id, c.section))
         p: Plan = state["plan"]
         with session() as con:
-            r = retrieve(con, svc, p.search_queries or [state["question"]], _scope(state.get("student")), state["as_of"],
+            r = retrieve(con, svc, p.search_queries or [state["question"]], _policy_scope(state)[0], state["as_of"],
                          list(dict.fromkeys(anchors)), question=state["question"])
         return {"retrieval": r}
 
@@ -266,25 +282,24 @@ def build_graph(svc: Services):
             scope = f" ({rr.scope_label})" if rr.scope_label else ""
             if w:
                 out.append(f"{rr.parameter}{scope}: {rr.display_value()} — {rr.docs[w['source_doc_id']]['title']} "
-                           f"({w['source_doc_id']} §{w['source_section']})")
+                           f"({w['source_doc_id']} section {w['source_section']})")
             elif rr.resolution.unresolved:
-                vals = [f"{c.doc_id} §{c.section} says {c.value}" for c in [rr.resolution.winner] + rr.resolution.tied]
+                vals = [f"{c.doc_id} section {c.section} says {c.value}" for c in [rr.resolution.winner] + rr.resolution.tied]
                 out.append(f"{rr.parameter}{scope}: unresolved tie — " + "; ".join(vals))
         return out
 
+    def _rule_sentence(rr) -> str:
+        """'Minimum attendance to sit end-semester exams: at least 80% (Circular: Revised Minimum Attendance
+        Requirement, section 1).'"""
+        w = rr.winner
+        spec = PARAMETERS.get(rr.parameter)
+        unit = "%" if (w.get("unit") or (spec.unit if spec else "")) == "pct" else ""
+        words = {">=": "at least", "<=": "at most", ">": "more than", "<": "less than", "in": "one of"}.get(w["operator"], "")
+        return (f"{spec.label if spec else rr.parameter}: {words} {w['value'].replace(';', ' or ')}{unit} "
+                f"({rr.docs[w['source_doc_id']]['title']}, section {w['source_section']}).").replace(":  ", ": ")
+
     def _rule_sentences(state: AskState) -> str:
-        """Plain-language rules for template answers: 'Minimum attendance to sit end-semester exams: at least 80%
-        (Circular: Revised Minimum Attendance Requirement, §1).'"""
-        out = []
-        for rr in state.get("rule_results", []):
-            if not (w := rr.winner):
-                continue
-            spec = PARAMETERS.get(rr.parameter)
-            unit = "%" if (w.get("unit") or (spec.unit if spec else "")) == "pct" else ""
-            words = {">=": "at least", "<=": "at most", ">": "more than", "<": "less than", "in": "one of"}.get(w["operator"], "")
-            out.append(f"{spec.label if spec else rr.parameter}: {words} {w['value'].replace(';', ' or ')}{unit} "
-                       f"({rr.docs[w['source_doc_id']]['title']}, §{w['source_section']}).".replace(":  ", ": "))
-        return " ".join(dict.fromkeys(out))
+        return " ".join(dict.fromkeys(_rule_sentence(rr) for rr in state.get("rule_results", []) if rr.winner))
 
     def _notes(state: AskState) -> list[str]:
         notes = [rr.precedence_note() for rr in state.get("rule_results", []) if rr.resolution.winner]
@@ -339,8 +354,10 @@ def build_graph(svc: Services):
             problems = ["the composer returned no valid JSON"]
         else:
             sources = sources_for_grounding(state["question"], verdict, state.get("tool_results", []), _rule_lines(state), shown_ev)
+            p: Plan | None = state.get("plan")
             problems = check_draft(draft, evidence_ids=shown, allowed_sources=sources, verdict=verdict,
-                                   self_id=(state.get("student") or {}).get("student_id"), needs_citation=verdict is None)
+                                   self_id=(state.get("student") or {}).get("student_id"), needs_citation=verdict is None,
+                                   personal=bool(p and p.category in PERSONAL))
             if not draft.insufficient_evidence:
                 score, unsupported = groundedness(f"{draft.answer} {draft.explanation}",
                                                   sources + [e.title for e in shown_ev] + _notes(state))
@@ -398,6 +415,14 @@ def build_graph(svc: Services):
                                                                       reason="lower authority" if step == "step3_authority" else "older at the same authority")],
                                                     resolved_by=step))
 
+        cited_text = " ".join(by_id[i].text for i in (draft.evidence_ids if draft else []) if i in by_id)
+        if r and r.ties and not decisive:          # equal authority, same date, different amounts: step 5, unresolved
+            for x, y in r.ties:
+                if x in by_id and y in by_id and (by_id[x], by_id[y]) not in text_tie:
+                    text_tie.append((by_id[x], by_id[y]))
+        if draft and not fallback and not decisive and not draft.insufficient_evidence and says_not_covered(draft.answer, cited_text):
+            draft.insufficient_evidence = True          # "there is no scholarship mentioned …" is not a retrieved fact
+
         cite_ids: list[str] = []
         options: list[str] = []
         if block:
@@ -407,15 +432,23 @@ def build_graph(svc: Services):
             if rule_tie:
                 rr = rule_tie[0]
                 srcs = [rr.resolution.winner] + rr.resolution.tied
-                said = " and ".join(f"{rr.docs[c.doc_id]['title']} (§{c.section}) says {c.value}" for c in srcs)
+                said = " and ".join(f"{rr.docs[c.doc_id]['title']} (section {c.section}) says {c.value}" for c in srcs)
                 issuer = rr.docs[srcs[0].doc_id]["issuer"]
                 anchors = {(c.doc_id, c.section) for c in srcs}
                 cite_ids = [e.eid for e in evidence if (e.doc_id, e.section) in anchors]
             else:
                 a, b = text_tie[0]
-                said = f"{a.title} (§{a.section}) and {b.title} (§{b.section}) say different things"
-                issuer = "the issuing office"
+                va, vb = amounts(a.text), amounts(b.text)
+                if va and vb:
+                    said = (f"{a.title} (section {a.section}) says Rs {', '.join(sorted(va))} and {b.title} (section {b.section}) "
+                            f"says Rs {', '.join(sorted(vb))}")
+                else:
+                    said = f"{a.title} (section {a.section}) and {b.title} (section {b.section}) say different things"
+                issuer = a.issuer if a.issuer == b.issuer else (f"{a.issuer} or {b.issuer}" if a.issuer and b.issuer else "the issuing office")
                 cite_ids = [a.eid, b.eid]
+                conflicts.append(ConflictRecord(topic="text", winner=None, resolved_by=None,
+                                                others=[SourceRef(doc_id=e.doc_id, section=e.section, title=e.title,
+                                                                  value=", ".join(sorted(amounts(e.text))) or None) for e in (a, b)]))
             answer = f"The sources disagree: {said}. Both have the same authority and date, so please confirm with {issuer}."
             explanation = (strip_markers(draft.explanation) if draft and not fallback else
                            "Annex A cannot break this tie, so both sources are cited.")
@@ -432,6 +465,13 @@ def build_graph(svc: Services):
         elif r and evidence and draft and not fallback and not draft.insufficient_evidence:
             answer_type, answer, explanation = "retrieved_fact", strip_markers(draft.answer), strip_markers(draft.explanation)
             cite_ids = [i for i in draft.evidence_ids if i in by_id]
+            ql = state["question"].lower()
+            asks_threshold = bool(THRESHOLD_Q.search(ql))
+            for rr in rule_results:                  # the question asks for this threshold but the draft never states it
+                spec = PARAMETERS.get(rr.parameter)
+                if (asks_threshold and rr.winner and spec and any(k in ql for k in spec.keywords)
+                        and not numbers(rr.display_value(rr.winner)) <= numbers(f"{answer} {explanation}")):
+                    explanation += " Rule in force: " + _rule_sentence(rr)
             stated = numbers(f"{answer} {explanation}")
             for rr in rule_results:                  # an answer that states a rule's value cites the clause that sets it
                 if (w := rr.winner) and numbers(str(rr.display_value(w))) & stated:
@@ -439,12 +479,14 @@ def build_graph(svc: Services):
             if draft.unanswered_parts:
                 explanation += " Not covered by the authorised sources: " + "; ".join(draft.unanswered_parts) + "."
         elif r and evidence and fallback and (r.max_score >= s.tau or any(e.anchor for e in evidence)):
-            top = next((e for e in evidence if e.label not in ("INFORMATIONAL", "LOWER_PRECEDENCE")), None)
+            usable = [e for e in evidence if e.label not in ("INFORMATIONAL", "LOWER_PRECEDENCE")]
+            cited = [by_id[i] for i in (draft.evidence_ids if draft else []) if i in by_id and by_id[i] in usable]
+            top = cited[0] if cited else (max(usable, key=lambda e: e.score if e.score is not None else -1.0) if usable else None)
             if top:
                 body = re.sub(r"^\s*(?:\d{1,2}(?:\.\d{1,2})*[.)]?\s+)?(?:[A-Z][\w ,'()-]{0,60}?\.\s+)?", "", redact(top.text).strip(), count=1)
                 sents = re.split(r"(?<=[.!?])\s+", body or top.text)
                 answer_type, answer = "retrieved_fact", " ".join(sents[:2])
-                explanation = f"Quoted from {top.title}" + (f", §{top.section}." if top.section else ".")
+                explanation = f"Quoted from {top.title}" + (f", section {top.section}." if top.section else ".")
                 cite_ids = [top.eid]
             else:
                 answer_type, answer, explanation = "not_found", NOT_FOUND, "No authorised source in force covers this question."
@@ -498,13 +540,17 @@ def build_graph(svc: Services):
         g = state.get("guardrail") or {}
         degraded = any(k in AVAILABILITY for k in state.get("llm_errors", [])) or state.get("plan_source") == "router_fallback"
         report = state.get("context_report") or {}
+        pscope, scope_src = _policy_scope(state)
+        scope_label = (" ".join(x for x in (pscope.programme, str(pscope.batch_year) if pscope.batch_year else None) if x)
+                       + f" (from the {scope_src})") if pscope else None
         retrieval_mode = (s.retrieval_mode + ("+rerank" if s.reranker.lower() != "none" else "")) if r else None
         meta = AskMeta(latency_ms=total_ms, guardrail=g.get("reason") if g.get("blocked") else None,
                        output_redactions=output_findings, groundedness=state.get("groundedness"),
                        session_id=state.get("session_id"),
                        standalone_question=state["question"] if state.get("rewrite") else None, rewrite=state.get("rewrite"),
                        degraded=degraded, planner=state.get("plan_source"), retrieval=retrieval_mode,
-                       llm_calls=len(live), tokens=prompt_toks + completion_toks, tokens_saved=report.get("tokens_saved", 0))
+                       llm_calls=len(live), tokens=prompt_toks + completion_toks, tokens_saved=report.get("tokens_saved", 0),
+                       as_of_source=state.get("as_of_source"), scope=scope_label)
         response = AskResponse(
             trace_id=state["trace_id"], answer=answer, answer_type=answer_type, citations=citations,
             tools_invoked=[ToolInvocation(tool=t.tool, input=t.input, output=t.output, status=t.status, ms=t.ms) for t in tool_results],
@@ -538,6 +584,9 @@ def build_graph(svc: Services):
             "session": {"id": state.get("session_id"), "rewrite": state.get("rewrite"),
                         "original_question": redact_pii(state["original_question"])[0] if state.get("rewrite") else None},
             "cache": {"hit": "miss"}, "degraded": degraded,
+            "scope": {"source": scope_src, "programme": pscope.programme if pscope else None,
+                      "batch_year": pscope.batch_year if pscope else None},
+            "as_of_source": state.get("as_of_source"),
             "token_breakdown": {"prompt": prompt_toks, "completion": completion_toks},
             "latency_breakdown_ms": timings, "notes": state.get("notes", []),
             "config": {"embedder": s.embed_model, "chunker": s.chunker, "top_k": s.top_k, "tau": s.tau,
@@ -609,7 +658,12 @@ def ask(svc: Services, question: str, student_id: str | None, as_of: date | None
         _graph = build_graph(svc)
     s = svc.settings
     started = time.perf_counter()
-    as_of = as_of or datetime.now(ZoneInfo(s.timezone)).date()
+    if as_of is not None:
+        as_of_source = "request"
+    elif (qd := question_date(question)) is not None:
+        as_of, as_of_source = qd, "question"
+    else:
+        as_of, as_of_source = datetime.now(ZoneInfo(s.timezone)).date(), "today"
     sid = (student_id or "").strip().upper() or None
     student = _student(sid)
     trace_id = uuid.uuid4().hex[:8]
@@ -645,6 +699,7 @@ def ask(svc: Services, question: str, student_id: str | None, as_of: date | None
     else:
         state: AskState = {"trace_id": trace_id, "question": standalone, "original_question": question if rewrite else None,
                            "rewrite": rewrite, "session_id": session_id, "header_student_id": student_id, "as_of": as_of,
+                           "as_of_source": as_of_source,
                            "started": started, "retries": 0, "llm_calls": [condense_call] if condense_call else []}
         out = _graph.invoke(state)
         resp = out["response"]

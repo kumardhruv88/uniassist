@@ -20,6 +20,8 @@ INJECTION = [re.compile(p, re.I) for p in [
     r"\bwhat (?:is|are) your (?:system )?(?:prompt|instructions)\b",
     r"<\|?(?:im_start|im_end|system|endoftext)\|?>|\[/?INST\]|###\s*(?:system|instruction)|\bBEGIN SYSTEM PROMPT\b",
     r"\b(?:new|updated|real) instructions?\s*:", r"\bfrom now on,? you\b",
+    r"\byour\s+(?:hidden|secret|initial|internal|original|system|developer)\s+(?:instructions?|prompts?|rules|guidelines)\b",
+    r"\brepeat\s+(?:everything|all|the text|the words|what is written|whatever is)\b[^.?!]{0,20}\b(?:above|before)\b",
 ]]
 JAILBREAK = [re.compile(p, re.I) for p in [
     r"\byou are now\b", r"\bdeveloper mode\b", r"\bjail ?break\b", r"\bDAN\b", r"\bdo anything now\b",
@@ -31,6 +33,8 @@ BULK = [re.compile(p, re.I) for p in [
     r"\b(?:list|show|give|display|send|export|dump|tell me)\b[^?]{0,30}\b(?:all|every|each|other)\s+(?:the\s+)?students?\b",
     r"\b(?:list|show|give|which|who are the)\b[^?]{0,20}\bstudents?\s+(?:with|who have|having|who failed|who are)\b",
     r"\b(?:attendance|marks|results?|cgpa|records?|backlogs?)\s+of\s+(?:all|every|each|other)\s+(?:the\s+)?students?\b",
+    r"\b(?:which|what|how many|list(?: the)?|name(?: the)?)\s+students?\s+(?:have|has|had|got|scored|failed|with|are|were)\b"
+    r"[^?]{0,30}\b(?:cgpa|gpa|marks?|attendance|backlogs?|results?|grades?|scores?)\b",
     r"\b(?:dump|export|download)\b[^?]{0,30}\b(?:database|table|records|data)\b",
     r"\bselect\s+\*\s+from\b|\bdrop\s+table\b|;\s*--",
 ]]

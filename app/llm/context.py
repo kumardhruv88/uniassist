@@ -90,7 +90,7 @@ def build_context(question: str, evidence: list, budget_tokens: int, do_compress
         ref = f"{e.doc_id}#{e.section}" if e.section else e.doc_id
         if e.label == "LOWER_PRECEDENCE":
             rep.set_aside.append(ref)
-            notes.append(f"{e.title} (§{e.section or '-'}) is a lower-authority source on a rule that a higher-authority "
+            notes.append(f"{e.title} (section {e.section or '-'}) is a lower-authority source on a rule that a higher-authority "
                          f"source governs; it was set aside and does not apply.")
             continue
         et = set(terms(e.text))

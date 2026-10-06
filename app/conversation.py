@@ -26,7 +26,7 @@ from pydantic import BaseModel, ValidationError
 from app.llm.client import LLMError, LLMResult
 
 FOLLOWUP_START = re.compile(r"^\s*(?:and|also|what about|how about|same (?:for|with)|then|so|but|for|in|ok(?:ay)?,?)\b", re.I)
-PRONOUN = re.compile(r"\b(?:it|that|this|those|these|them|there|the same|then)\b", re.I)
+PRONOUN = re.compile(r"\b(?:it|its|that|this|those|these|them|there|the same|then|that course|the same course)\b", re.I)
 SID = re.compile(r"\bS\d{4}\b", re.I)
 
 
@@ -96,7 +96,7 @@ def looks_like_followup(q: str, courses: list[dict]) -> bool:
     words = q.split()
     if FOLLOWUP_START.search(q):
         return True
-    if len(words) <= 6 and PRONOUN.search(q):
+    if len(words) <= 10 and PRONOUN.search(q):
         return True
     return len(words) <= 4 and bool(_mentions(q, courses))          # a bare course name, e.g. after a clarification
 
@@ -116,6 +116,10 @@ def contextualize(question: str, history: list[Turn], courses: list[dict], llm) 
         return f"{prev.question.rstrip(' ?.')} for {name} ({code})?", "clarification", None
     if short and len(now_m) == 1 and len(prev_m) == 1 and now_m[0][0] != prev_m[0][0]:
         return prev.question.replace(prev_m[0][1], now_m[0][1], 1), "course_swap", None
+    prev_code = prev.course_code or (prev_m[0][0] if len(prev_m) == 1 else None)
+    if not now_m and prev_code and PRONOUN.search(question):      # "Am I eligible for its exam then?" keeps the course
+        name = next((c["course_name"] for c in courses if c["course_code"] == prev_code), prev_code)
+        return f"{question.rstrip(' ?.')} ({name}, {prev_code})?", "course_carry", None
 
     user = ("Previous questions (oldest first):\n" + "\n".join(f"{i}. {t.question}" for i, t in enumerate(history[-3:], 1))
             + f"\n\nFollow-up: <<<{question}>>>")

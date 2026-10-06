@@ -108,7 +108,7 @@ def ingest(data: bytes, filename: str, meta: IngestMetadata, svc: Services) -> I
                 if taken:
                     continue
                 rid = f"AUTO-{meta.doc_id}-{SHORT[c.parameter]}-{c.section}"
-                _upsert_rule(con, rule_id=rid, description=f"Extracted from §{c.section}: \"{c.sentence[:160]}\"",
+                _upsert_rule(con, rule_id=rid, description=f"Extracted from section {c.section}: \"{c.sentence[:160]}\"",
                              parameter=c.parameter, operator=c.operator, value=c.value, scope_programmes=meta.scope_programmes,
                              scope_batches=meta.scope_batches, effective_from=str(meta.effective_from),
                              effective_to=str(meta.effective_to) if meta.effective_to else None, source_doc_id=meta.doc_id,

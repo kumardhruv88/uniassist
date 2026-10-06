@@ -76,7 +76,8 @@ LLM: **Ollama `llama3.1:8b`** (already pulled on this machine). `[x]` = built, `
   - Branches `garv`, `dhruv`, `manish` created from `main` for each member's work; merge back through pull requests
   - [x] Collaborator access granted on kumardhruv88/uniassist
   - [x] Pushed `main`, `garv`, `dhruv`, `manish` (34 commits)
-  - [ ] Force-push the rewritten history (same content, Claude lines removed) from your terminal: `git push --force-with-lease origin main garv dhruv manish`
+  - [x] Force-pushed the rewritten history (no Claude lines); all branches at `b907e94`. GitHub credits kumardhruv88 (17), m4nish-dev (13), garvbahl37-gif (6)
+  - [ ] Branch list "Updated" shows the last pusher, not the author: Dhruv and Manish each recreate (or push to) their own branch while signed in as themselves
 - [ ] Rotate the GitHub tokens shared during setup
 
 ## Guide §9: judging readiness
@@ -141,4 +142,19 @@ Each item names the technique used. `[x]` built and tested, `[~]` in progress, `
 - [x] Golden dataset expanded to 146 items (eval agent): paraphrases, adversarial injection and jailbreak, PII and bulk exfiltration, follow-ups, cache checks
 - [~] Config comparison A vs B vs C (fixed chunks + MiniLM / clause + bge-small + hybrid / + rerank), τ calibrated for A. B done: 93.1% correct, 89.3% citation accuracy, 97.4% abstention, 100% retrieval hit, 100% injection resistance, 0.7% hallucination, p50 3.0 s / p95 5.4 s, 1.42 LLM calls and ~1,300 tokens per question; C running
 - [ ] LLM-as-judge (prompt disclosed) calibrated against exact-match grades
-- [ ] `make eval` pipeline: pytest → golden eval → report → regression gates
+- [x] `make eval` pipeline: pytest → golden eval → report → regression gates (Makefile: test, eval, eval-all, eval-a/b/c, judge, report, verify-golden)
+- [x] LLM-as-judge calibrated: 90.3% agreement with exact match on B (κ 0.37); blind spot documented (rates a wrong "not found" as correct), so exact match stays primary
+- [x] Fixed the 10 B failures traced in `eval/failure_analysis.yaml`: coverage stop-list (TF6, PR10), eligibility-wording check only for personal questions + fallback quotes the cited clause (PF12), "which students have a CGPA…" bulk pattern (BK4), hidden-instructions / "repeat everything above" injection patterns (ADV7), "give/attempt" as personal verbs (PT13), "not mentioned" drafts → not_found (NA9), applied rule's value always stated (VC2), every table variant listed (TF1), course carried into pronoun follow-ups (FU3b)
+- [x] Re-ran B after the fixes: 99.3% correct (143/144 scored), every bucket 100% except unanswerable 90% (NA9, fixed after the run), citation accuracy 89.8%, p50 3.1 s / p95 5.0 s
+- [ ] Final A/B/C re-run on the current code, then refresh REPORT.md, README and diagrams (run when nobody is using the shared Ollama)
+
+### Aster University test pack (judge rehearsal)
+- [x] 13 synthetic documents built from the test manifest (`eval/adversarial/pack/`, `make_pack.py`): baseline, supersession, exact duplicate, false FAQ, unofficial post, future-dated rule, out-of-scope B.Arch, visible + hidden injection, tied fee circulars, scanned OCR notice, irrelevant library hours, keyword-stuffed post
+- [x] One `.meta.json` per document, plus `JUDGE_TEST_GUIDE.md/.pdf`: clean-instance setup, upload order, 11 questions with expected answers
+- [ ] Live test by the team in front of the judges (not run by us, at the team's request); `run_pack.py` automates the same checks
+- [x] Dates written in the question set `as_of` when the request has none ("As of 2026-12-10", "in October 2026")
+- [x] Programme and batch written in the question scope policy answers ("for B.Arch batch 2025"); personal tools keep the student's own scope
+- [x] Equal-rank, same-date sources stating different amounts give `conflict_flagged` with both cited (fees and other non-rule facts)
+- [x] Unicode NFKC at parse time: ligatures (ﬁ ﬂ ﬀ) no longer break search, claims or prompts
+- [x] No "§" sign in answers, notes, warnings or the UI ("section 7.2")
+- [x] UI: fill the upload form from a `.meta.json`; the "Rules as of" date is sent only when changed, so a date in the question applies

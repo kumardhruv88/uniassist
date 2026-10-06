@@ -73,13 +73,13 @@ def build_prompt(question: str) -> tuple[str, str]:
 PERSONAL_DATA_RE = re.compile(r"\bmy\s+(?:own\s+)?(?:attendance|marks?|results?|grades?|cgpa|gpa|backlogs?|records?|scores?|"
                               r"eligibility|courses?|semester)\b|\bhow many (?:classes|lectures) (?:have|did) i\b", re.I)
 PERSONAL_ELIG_RE = re.compile(r"\b(?:am i|can i|will i|could i|do i|would i|may i|shall i|should i|i am|i'm)\b[^?.]{0,50}?"
-                              r"\b(?:eligible|qualif\w*|sit|appear|write|take|register|allowed|permitted|attend|miss|skip|bunk|pass|clear)\b"
+                              r"\b(?:eligible|qualif\w*|sit|appear|write|take|give|attempt|register|allowed|permitted|attend|miss|skip|bunk|pass|clear)\b"
                               r"|\bi (?:failed|passed|have \d+ backlogs?)\b|\bif i pass\b", re.I)
 PERSONAL_RE = re.compile(f"{PERSONAL_DATA_RE.pattern}|{PERSONAL_ELIG_RE.pattern}", re.I)
 OTHER_RE = re.compile(r"\b(my friend|friend's|classmate|roommate|someone else|another student|other student|his|her)\b[^?]{0,60}\b(attendance|marks|result|cgpa|record|grade|backlog)", re.I)
 T = {
     "attendance": re.compile(r"attendance|classes? attended|attended|present|bunk|miss(ed)? classes", re.I),
-    "eligible": re.compile(r"eligib|allowed|permitted|qualif|can i (sit|appear|write|take|register)|sit (for|the)|appear (for|in)|debar|detain", re.I),
+    "eligible": re.compile(r"eligib|allowed|permitted|qualif|can i (sit|appear|write|take|give|attempt|register)|sit (for|the)|appear (for|in)|debar|detain", re.I),
     "supplementary": re.compile(r"supplementar|re-?exam|re-?appear|repeat exam|make-?up exam", re.I),
     "placement": re.compile(r"placement|recruit|campus drive|company|companies", re.I),
     "results": re.compile(r"\b(result|marks?|grade|score|scored|passed|failed|pass mark|passing)\b", re.I),

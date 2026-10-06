@@ -115,8 +115,8 @@ def extract_claims(chunks: list[Chunk]) -> tuple[list[Claim], list[str]]:
                 (v, s), = found.items()
                 claims.append(Claim(param, op, v, unit, section, s))
             elif found or ambiguous:
-                warnings.append(f"§{section}: {param} stated ambiguously ({', '.join(found) or 'several values'}); no rule added")
+                warnings.append(f"section {section}: {param} stated ambiguously ({', '.join(found) or 'several values'}); no rule added")
             elif mention is not None and mention.search(text) and re.search(PCT, text, re.I) and param == "min_attendance_pct":
                 if not re.search(r"condon", text, re.I):
-                    warnings.append(f"§{section}: mentions {param} but no rule could be extracted (parameter_mentioned_without_rule)")
+                    warnings.append(f"section {section}: mentions {param} but no rule could be extracted (parameter_mentioned_without_rule)")
     return claims, warnings

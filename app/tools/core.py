@@ -28,6 +28,7 @@ class ToolContext:
     con: sqlite3.Connection
     student: dict | None
     as_of: date
+    scope_override: StudentScope | None = None     # policy questions that name a programme/batch ("for B.Arch 2025")
 
     @property
     def student_id(self) -> str | None:
@@ -35,6 +36,8 @@ class ToolContext:
 
     @property
     def scope(self) -> StudentScope | None:
+        if self.scope_override is not None:
+            return self.scope_override
         return StudentScope(self.student["programme"], self.student["batch_year"]) if self.student else None
 
 

@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from datetime import date
 
 import math
+import re
 
 from app.db import rows
 from app.models import SourceRef
@@ -29,6 +30,11 @@ from app.retrieval.store import Hit
 from app.services import Services
 
 LABEL_WEIGHT = {"PRIMARY": 1.0, "SOURCE": 1.0, "TIED": 1.0, "LOWER_PRECEDENCE": 0.9, "INFORMATIONAL": 0.8}
+MONEY = re.compile(r"(?:rs\.?|inr|₹)\s*([\d,]+(?:\.\d+)?)", re.I)
+
+
+def amounts(text: str) -> set[str]:
+    return {v.replace(",", "").rstrip(".") for v in MONEY.findall(text)}
 
 
 @dataclass
@@ -48,6 +54,7 @@ class Evidence:
     anchor: bool = False
     flagged: bool = False
     is_table: bool = False
+    issuer: str = ""
 
 
 @dataclass
@@ -61,6 +68,7 @@ class RetrievalResult:
     expansion: list[str] = field(default_factory=list)
     queries: list[str] = field(default_factory=list)
     mode: str = "dense"
+    ties: list[tuple[str, str]] = field(default_factory=list)   # equal-rank sources stating different amounts
 
 
 def retrieve(con: sqlite3.Connection, svc: Services, queries: list[str], student: StudentScope | None, as_of: date,
@@ -178,7 +186,25 @@ def retrieve(con: sqlite3.Connection, svc: Services, queries: list[str], student
         out.evidence.append(Evidence(eid=f"E{i}", chunk_id=h.chunk_id, doc_id=h.doc_id, title=d["title"], section=h.section,
                                      page=h.page, text=h.text, score=h.score, label=labels.get(h.chunk_id, "SOURCE"),
                                      authority=d["authority_level"], effective_from=d["effective_from"], version=d["version"],
-                                     anchor=h.chunk_id in anchored, flagged=h.flagged, is_table=h.is_table))
+                                     anchor=h.chunk_id in anchored, flagged=h.flagged, is_table=h.is_table,
+                                     issuer=d["issuer"]))
+
+    # Annex A step 5 for facts that are not rule parameters (fees, charges): two sources with the same authority and
+    # the same effective date, both relevant to the question, that state different amounts for the same thing
+    from app.retrieval.query import terms as _terms
+    for i, a in enumerate(out.evidence):
+        for b in out.evidence[i + 1:]:
+            if (a.doc_id == b.doc_id or a.authority != b.authority or a.authority >= 5 or a.effective_from != b.effective_from
+                    or {a.label, b.label} & {"LOWER_PRECEDENCE", "INFORMATIONAL"}
+                    or (a.score or 0) < s.tau or (b.score or 0) < s.tau):
+                continue
+            va, vb = amounts(a.text), amounts(b.text)
+            ta, tb = set(_terms(a.text)), set(_terms(b.text))
+            if va and vb and not va & vb and len(ta & tb) / max(1, len(ta | tb)) >= 0.5:
+                a.label = b.label = "TIED"
+                out.ties.append((a.eid, b.eid))
+                out.notes.append(f"{a.doc_id} section {a.section} and {b.doc_id} section {b.section} have the same authority and date "
+                                 f"but state different amounts (step 5: unresolved)")
     bm_pos = {c: i for i, c in enumerate(bm25_rank, 1)}
     dn_pos = {c: i for i, c in enumerate(dense_rank, 1)}
     out.sources_retrieved += [{"doc_id": h.doc_id, "section": h.section, "score": round(h.score or 0, 3),
