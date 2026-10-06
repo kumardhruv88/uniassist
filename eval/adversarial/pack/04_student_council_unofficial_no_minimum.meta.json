@@ -1,0 +1,15 @@
+{
+  "doc_id": "AST-SC-2026",
+  "title": "Student council notice board post",
+  "issuer": "Student Council (unofficial)",
+  "authority_level": 5,
+  "doc_type": "unofficial",
+  "effective_from": "2026-09-15",
+  "effective_to": null,
+  "supersedes": null,
+  "scope_programmes": "ALL",
+  "scope_batches": "ALL",
+  "provenance": "UniAssist adversarial test pack (synthetic, fictional Aster University)",
+  "retrieved_on": "2026-10-06",
+  "synthetic": "Y"
+}
