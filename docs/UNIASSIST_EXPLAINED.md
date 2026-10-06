@@ -150,7 +150,7 @@ Asked about 15 July 2026, the same question returns 75%, and the circular is lis
 
 The evaluation traced each of B's failures to a cause, and every one was fixed. On the final code, B scores:
 - **100% correct** (146 of 146, every bucket);
-- citation accuracy 91.1% and a hallucination rate of 0.0%;
+- citation accuracy 91.0% and a hallucination rate of 0.0%;
 - about 1.4 AI calls per question, with a median answer time of 3.0 s.
 
 C's reranker gained one question, so it stays an option, not the default.
@@ -162,7 +162,7 @@ C's reranker gained one question, so it stays an option, not the default.
 - hidden prompt injection;
 - tied fee circulars, a scanned notice and a keyword-stuffed trap.
 
-All were uploaded through the real UI in a browser, and **13 of 13 checks passed live**. On top of that, 58 automated tests run offline.
+All were uploaded through the real UI in a browser, and **13 of 13 checks passed live**. On top of that, 72 automated tests run offline.
 
 ## 6. Running it, and where things are
 

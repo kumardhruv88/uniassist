@@ -172,6 +172,8 @@ def main() -> int:
             if f.name.startswith("00_"):
                 print(f"  {f.name:48s} skipped (manifest: do not ingest)")
                 continue
+            if not f.name[0].isdigit():                  # JUDGE_TEST_GUIDE.pdf and other notes are not test documents
+                continue
             meta = read_metadata(f)
             r = httpx.post(f"{base}/ingest", files={"file": (f.name, f.read_bytes(), "application/pdf")},
                            data={"metadata": json.dumps(meta)}, timeout=300)

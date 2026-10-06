@@ -1,16 +1,16 @@
 # UniAssist evaluation report
 
-Generated 2026-10-06 15:44 by `eval/report.py` from `eval/runs/` (latest full run per label). Configurations compared: A, B, C. Gates and the detailed failure list use **B**. Do not edit by hand: re-run `make report`.
+Generated 2026-10-06 16:41 by `eval/report.py` from `eval/runs/` (latest full run per label). Configurations compared: A, B, C. Gates and the detailed failure list use **B**. Do not edit by hand: re-run `make report`.
 
 ## 1. Summary and final choice
 
 - **A** (baseline: all-MiniLM-L6-v2 + fixed 800-char chunks, dense retrieval only, no glossary expansion): correctness 77.8%, retrieval hit@k 1.4%, citation accuracy 1.4%, abstention 90.5%, tool results 65.9%, injection resistance 100.0%, p50/p95 3329/6023 ms, 1.35 LLM calls and 1265 tokens per question.
-- **B** (shipped defaults: bge-small-en-v1.5 + clause chunks, hybrid dense + BM25 (RRF), glossary expansion): correctness 100.0%, retrieval hit@k 100.0%, citation accuracy 91.1%, abstention 100.0%, tool results 100.0%, injection resistance 100.0%, p50/p95 2971/4928 ms, 1.38 LLM calls and 1330 tokens per question.
+- **B** (shipped defaults: bge-small-en-v1.5 + clause chunks, hybrid dense + BM25 (RRF), glossary expansion): correctness 100.0%, retrieval hit@k 100.0%, citation accuracy 91.0%, abstention 100.0%, tool results 100.0%, injection resistance 100.0%, p50/p95 3020/4081 ms, 1.36 LLM calls and 1320 tokens per question.
 - **C** (B + cross-encoder reranker (ms-marco-MiniLM-L-6-v2)): correctness 93.8%, retrieval hit@k 100.0%, citation accuracy 91.5%, abstention 97.4%, tool results 95.1%, injection resistance 100.0%, p50/p95 3153/5430 ms, 1.38 LLM calls and 1255 tokens per question.
 
-**Final choice: B** — B, C are tied on correctness (within 7.0 pp) and on latency (within 388 ms), and B has the fewest moving parts. vs A: correctness +22.2 pp, retrieval hit@k +98.6 pp, citation accuracy +89.7 pp, abstention +9.5 pp, tool results +34.1 pp, p50 latency -358.0 ms; vs C: correctness +6.2 pp, retrieval hit@k +0.0 pp, citation accuracy -0.4 pp, abstention +2.6 pp, tool results +4.9 pp, p50 latency -182.0 ms.
+**Final choice: B** — B, C are tied on correctness (within 7.0 pp) and on latency (within 388 ms), and B has the fewest moving parts. vs A: correctness +22.2 pp, retrieval hit@k +98.6 pp, citation accuracy +89.6 pp, abstention +9.5 pp, tool results +34.1 pp, p50 latency -309.0 ms; vs C: correctness +6.2 pp, retrieval hit@k +0.0 pp, citation accuracy -0.5 pp, abstention +2.6 pp, tool results +4.9 pp, p50 latency -133.0 ms.
 
-Decision rule: (1) configurations whose correctness is within the noise band of the best (7.0 pp = the larger of one item and the observed run-to-run spread; B run 5× on this dataset: correctness spread 6.9 pp, p50 latency spread 388 ms) count as tied; (2) among those, p50 latencies within 388 ms of the fastest (the larger of 10% and the observed latency spread) count as tied; (3) among those, the configuration with fewer retrieval components (hybrid search, reranker) wins.
+Decision rule: (1) configurations whose correctness is within the noise band of the best (7.0 pp = the larger of one item and the observed run-to-run spread; B run 6× on this dataset: correctness spread 6.9 pp, p50 latency spread 388 ms) count as tied; (2) among those, p50 latencies within 388 ms of the fastest (the larger of 10% and the observed latency spread) count as tied; (3) among those, the configuration with fewer retrieval components (hybrid search, reranker) wins.
 
 Regression gates on B (all pass):
 
@@ -67,14 +67,14 @@ Black-box: `eval/run_eval.py` sends each question to `POST /ask` (headers `X-Stu
 | Latency, LLM calls, tokens | From the audit record (server-side). p50/p95 exclude cache hits (cold path). Nearest-rank percentiles. |
 | LLM-as-judge | `eval/judge.py`, prompt verbatim in `eval/judge_prompt.md`: llama3.1:8b, temperature 0, scores 0/1/2 against the reference answer; checked by agreement + Cohen's kappa with the exact-match grade, probes (reference → 2, corrupted answers → 0) and a determinism re-run. |
 
-Caveats: runs use a shared local Ollama, so latency moves between runs (B was run 5× (correctness spread 6.9 pp, p50 spread 388 ms)); most configurations were run once. The baseline's τ is tuned on the same items it is evaluated on (the leave-one-out estimate in §7 corrects for this). Items that need OCR are skipped when the scanned notice is not indexed. LLM-response and semantic caches are off during configuration runs so every question pays for its own LLM calls; the exact answer cache stays on for the cache items.
+Caveats: runs use a shared local Ollama, so latency moves between runs (B was run 6× (correctness spread 6.9 pp, p50 spread 388 ms)); most configurations were run once. The baseline's τ is tuned on the same items it is evaluated on (the leave-one-out estimate in §7 corrects for this). Items that need OCR are skipped when the scanned notice is not indexed. LLM-response and semantic caches are off during configuration runs so every question pays for its own LLM calls; the exact answer cache stays on for the cache items.
 
 ## 4. Configurations
 
 | Label | Description | Embedder | Chunker | Retrieval | Reranker | τ | top_k | Planner | LLM | Run |
 |---|---|---|---|---|---|---|---|---|---|---|
 | **A** | baseline: all-MiniLM-L6-v2 + fixed 800-char chunks, dense retrieval only, no glossary expansion | sentence-transformers/all-MiniLM-L6-v2 | fixed-800 | dense | none | 0.397 (tau=0.397 calibrated on 76 items (accuracy 0.921)) | 5 | auto | llama3.1:8b | 20261006-141412 (144 items, 410 s) |
-| **B** | shipped defaults: bge-small-en-v1.5 + clause chunks, hybrid dense + BM25 (RRF), glossary expansion | BAAI/bge-small-en-v1.5 | clause-v1 | hybrid | none | 0.68 (tau=0.68 (default)) | 5 | auto | llama3.1:8b | 20261006-153726 (146 items, 376 s) |
+| **B** | shipped defaults: bge-small-en-v1.5 + clause chunks, hybrid dense + BM25 (RRF), glossary expansion | BAAI/bge-small-en-v1.5 | clause-v1 | hybrid | none | 0.68 (tau=0.68 (default)) | 5 | auto | llama3.1:8b | 20261006-163427 (146 items, 371 s) |
 | **C** | B + cross-encoder reranker (ms-marco-MiniLM-L-6-v2) | BAAI/bge-small-en-v1.5 | clause-v1 | hybrid | cross-encoder/ms-marco-MiniLM-L-6-v2 | 0.68 (tau=0.68 (default)) | 5 | auto | llama3.1:8b | 20261006-140505 (144 items, 406 s) |
 
 ## 5. Results by configuration
@@ -84,7 +84,7 @@ Caveats: runs use a shared local Ollama, so latency moves between runs (B was ru
 | Items scored | 144 | 146 | 144 |
 | Answer correctness (all checks) | 77.8% | **100.0%** | 93.8% |
 | Answer-type accuracy | 86.1% | **100.0%** | 95.1% |
-| Citation accuracy (doc#section) | 1.4% | 91.1% | **91.5%** |
+| Citation accuracy (doc#section) | 1.4% | 91.0% | **91.5%** |
 | Citation accuracy (document level) | 91.4% | **98.9%** | 97.6% |
 | Answers citing an expected source | 1.6% | 98.6% | **100.0%** |
 | Retrieval hit@k (doc#section) | 1.4% | **100.0%** | **100.0%** |
@@ -102,12 +102,12 @@ Caveats: runs use a shared local Ollama, so latency moves between runs (B was ru
 | Follow-up turns correct | 60.0% | **100.0%** | 80.0% |
 | Cache hit on identical repeat | 100.0% | 100.0% | 100.0% |
 | Hallucination rate | 2.1% | **0.0%** | 0.7% |
-| Groundedness (mean) | 0.887 | **0.941** | **0.941** |
-| Latency p50 (uncached) | 3329 ms | **2971 ms** | 3153 ms |
-| Latency p95 (uncached) | 6023 ms | **4928 ms** | 5430 ms |
-| LLM calls per question | **1.347** | 1.384 | 1.382 |
-| Tokens per question | 1265 | 1330 | **1255** |
-| Composer fallbacks | 4 | **1** | 3 |
+| Groundedness (mean) | 0.887 | **0.946** | 0.941 |
+| Latency p50 (uncached) | 3329 ms | **3020 ms** | 3153 ms |
+| Latency p95 (uncached) | 6023 ms | **4081 ms** | 5430 ms |
+| LLM calls per question | **1.347** | 1.356 | 1.382 |
+| Tokens per question | 1265 | 1320 | **1255** |
+| Composer fallbacks | 4 | **0** | 3 |
 | HTTP errors | 0 | 0 | 0 |
 
 Bold = best value where the configurations differ. Percentages are over the items each metric applies to (see §3).
@@ -242,26 +242,26 @@ A: calibration pass `20261006-141212` (76 items at τ=0.68) chose τ*=0.397 (gat
 | Config | p50 ms (uncached) | p95 ms (uncached) | mean ms | p50 ms (all) | cache-hit mean ms | LLM calls/q | LLM calls/q uncached | tokens/q | tokens/q uncached | tokens total |
 |---|---|---|---|---|---|---|---|---|---|---|
 | **A** | 3329 | 6023 | 2882 | 3329 | 0 | 1.35 | 1.37 | 1265 | 1283 | 182194 |
-| **B** | 2971 | 4928 | 2605 | 2954 | 1 | 1.38 | 1.40 | 1330 | 1349 | 194238 |
+| **B** | 3020 | 4081 | 2571 | 2993 | 0 | 1.36 | 1.38 | 1320 | 1338 | 192708 |
 | **C** | 3153 | 5430 | 2849 | 3153 | 1 | 1.38 | 1.40 | 1255 | 1273 | 180716 |
 
 | Bucket (uncached p50 · calls · tokens per q) | A | B | C |
 |---|---|---|---|
-| policy_fact | 3561 ms · 2.0 calls · 1809 tok | 3040 ms · 2.1 calls · 1897 tok | 3312 ms · 2.0 calls · 1760 tok |
-| cache | 3473 ms · 1.0 calls · 1109 tok | 3019 ms · 1.0 calls · 1225 tok | 2930 ms · 1.0 calls · 1102 tok |
-| procedure | 3536 ms · 2.0 calls · 1734 tok | 3615 ms · 2.1 calls · 1916 tok | 3454 ms · 2.0 calls · 1690 tok |
-| unanswerable | 702 ms · 1.3 calls · 1063 tok | 613 ms · 1.3 calls · 1030 tok | 708 ms · 1.3 calls · 1025 tok |
-| off_topic | 315 ms · 1.0 calls · 718 tok | 286 ms · 1.0 calls · 718 tok | 345 ms · 1.0 calls · 718 tok |
-| versions_conflicts | 3449 ms · 1.4 calls · 1395 tok | 3149 ms · 1.4 calls · 1499 tok | 3129 ms · 1.4 calls · 1395 tok |
-| personal_tools | 3328 ms · 1.1 calls · 1234 tok | 2993 ms · 1.1 calls · 1303 tok | 3234 ms · 1.2 calls · 1238 tok |
+| policy_fact | 3561 ms · 2.0 calls · 1809 tok | 3117 ms · 2.0 calls · 1878 tok | 3312 ms · 2.0 calls · 1760 tok |
+| cache | 3473 ms · 1.0 calls · 1109 tok | 3077 ms · 1.0 calls · 1255 tok | 2930 ms · 1.0 calls · 1102 tok |
+| procedure | 3536 ms · 2.0 calls · 1734 tok | 3257 ms · 2.1 calls · 1935 tok | 3454 ms · 2.0 calls · 1690 tok |
+| unanswerable | 702 ms · 1.3 calls · 1063 tok | 618 ms · 1.3 calls · 1042 tok | 708 ms · 1.3 calls · 1025 tok |
+| off_topic | 315 ms · 1.0 calls · 718 tok | 287 ms · 1.0 calls · 718 tok | 345 ms · 1.0 calls · 718 tok |
+| versions_conflicts | 3449 ms · 1.4 calls · 1395 tok | 3048 ms · 1.4 calls · 1449 tok | 3129 ms · 1.4 calls · 1395 tok |
+| personal_tools | 3328 ms · 1.1 calls · 1234 tok | 3034 ms · 1.1 calls · 1348 tok | 3234 ms · 1.2 calls · 1238 tok |
 | other_student | 2 ms · 0.0 calls · 0 tok | 2 ms · 0.0 calls · 0 tok | 2 ms · 0.0 calls · 0 tok |
 | bulk_pii | 1 ms · 0.6 calls · 621 tok | 1 ms · 0.0 calls · 0 tok | 2 ms · 0.6 calls · 559 tok |
-| multi_step | 3751 ms · 1.0 calls · 1252 tok | 3312 ms · 1.0 calls · 1319 tok | 3784 ms · 1.0 calls · 1204 tok |
-| safety | 2 ms · 1.0 calls · 894 tok | 3 ms · 1.0 calls · 938 tok | 2 ms · 1.0 calls · 871 tok |
-| clarification | 883 ms · 1.0 calls · 739 tok | 772 ms · 1.0 calls · 739 tok | 912 ms · 1.0 calls · 739 tok |
-| adversarial | 2 ms · 0.5 calls · 377 tok | 2 ms · 0.4 calls · 309 tok | 2 ms · 0.5 calls · 486 tok |
+| multi_step | 3751 ms · 1.0 calls · 1252 tok | 3366 ms · 1.0 calls · 1345 tok | 3784 ms · 1.0 calls · 1204 tok |
+| safety | 2 ms · 1.0 calls · 894 tok | 2 ms · 1.0 calls · 954 tok | 2 ms · 1.0 calls · 871 tok |
+| clarification | 883 ms · 1.0 calls · 739 tok | 823 ms · 1.0 calls · 739 tok | 912 ms · 1.0 calls · 739 tok |
+| adversarial | 2 ms · 0.5 calls · 377 tok | 2 ms · 0.4 calls · 313 tok | 2 ms · 0.5 calls · 486 tok |
 | abuse | 2 ms · 0.0 calls · 0 tok | 2 ms · 0.0 calls · 0 tok | 4 ms · 0.0 calls · 0 tok |
-| follow_up | 3494 ms · 1.3 calls · 1205 tok | 3173 ms · 1.5 calls · 1538 tok | 4006 ms · 1.4 calls · 1287 tok |
+| follow_up | 3494 ms · 1.3 calls · 1205 tok | 3289 ms · 1.4 calls · 1432 tok | 4006 ms · 1.4 calls · 1287 tok |
 
 ## 9. Failures
 
@@ -278,7 +278,7 @@ Items that exercise the features added on 6 October (sessions, caches, input gua
 | Off-topic chit-chat | 2/2 | 2/2 | 2/2 |
 | Informal / paraphrased wording | 8/17 (fail: TF1, CD4, PR4, PR7, PR10, VC9, VC11, PT13, MS7) | 17/17 | 15/17 (fail: PR10, PT13) |
 
-Trace ids resolve with `GET /audit/{trace_id}` on the instance that answered, and offline in `eval/runs/B/20261006-153726.audit.jsonl` (audit records saved with the run).
+Trace ids resolve with `GET /audit/{trace_id}` on the instance that answered, and offline in `eval/runs/B/20261006-163427.audit.jsonl` (audit records saved with the run).
 
 **B**: 0 of 146 items fail.
 
@@ -449,6 +449,7 @@ make eval                                  # golden set on the API at $API (defa
 | B | 20261006-144346 | full | 144 | 99.3% | golden.yaml |
 | B | 20261006-145120 | full | 144 | 99.3% | golden.yaml |
 | B | 20261006-153726 | full | 146 | 100.0% | golden.yaml |
+| B | 20261006-163427 | full | 146 | 100.0% | golden.yaml |
 | C | 20261006-140505 | full | 144 | 93.8% | golden.yaml |
 
 </details>

@@ -154,19 +154,19 @@ Each metric is computed in `eval/run_eval.py`, at the line shown.
 | Metric | Result |
 |---|---|
 | Answer correctness | **100% (146 of 146; every bucket at 100%)** |
-| Citation accuracy | 91.1% |
+| Citation accuracy | 91.0% |
 | Abstention accuracy | 100% |
 | Tool results, refusals, injection resistance | 100%, 100%, 100% |
 | Retrieval hit (right clause in the top 5) | 100% |
 | Hallucination rate | 0.0% |
-| Groundedness | 0.94 |
-| Latency (p50 / p95) | 2.97 s / 4.93 s |
-| AI calls per question | 1.38 |
-| Tokens per question | about 1,330 |
+| Groundedness | 0.95 |
+| Latency (p50 / p95) | 3.02 s / 4.08 s |
+| AI calls per question | 1.36 |
+| Tokens per question | about 1,320 |
 
 **Also:**
 - adversarial pack **13/13** live through the UI (`eval/adversarial/ui-run/results.json`);
-- **58/58** automated tests;
+- **72/72** automated tests;
 - 16/16 synthetic-data checks;
 - 753/753 golden-answer checks.
 
