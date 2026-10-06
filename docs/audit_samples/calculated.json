@@ -1,0 +1,383 @@
+{
+  "request": {
+    "question": "Am I eligible to sit the Database Systems end-semester exam?",
+    "X-Student-Id": "S1007",
+    "as_of_date": "2026-10-06"
+  },
+  "response": {
+    "trace_id": "517348dc",
+    "answer": "You are not eligible to sit the Database Systems (CS202) end-semester exam: your attendance is 79.66%, below the required 80%. Attending the next class would bring you to 48 of 60.",
+    "answer_type": "calculated",
+    "citations": [
+      {
+        "doc_id": "ACAD-2026-08",
+        "title": "Circular: Revised minimum attendance requirement",
+        "section": "1",
+        "page": 1,
+        "version": "1",
+        "effective_from": "2026-08-01",
+        "quote": "1. With effect from 1 August 2026, the minimum attendance required to appear in the end-semester examination is raised to 80% in each course. This circular replaces clause 7.2 of the Academic\nRegulations (ACAD-REG-2024)."
+      }
+    ],
+    "tools_invoked": [
+      {
+        "tool": "check_exam_eligibility",
+        "input": {
+          "course_code": "CS202"
+        },
+        "output": {
+          "result": "NOT_ELIGIBLE",
+          "classes_held": 59,
+          "classes_attended": 47,
+          "attendance_pct": 79.66,
+          "threshold": 80.0,
+          "rule_id": "AUTO-ACAD-2026-08-ATT-1",
+          "classes_needed": 1,
+          "projected_attended": 48,
+          "projected_held": 60
+        },
+        "status": "ok",
+        "ms": 0
+      }
+    ],
+    "applied_rules": [
+      {
+        "rule_id": "AUTO-ACAD-2026-08-ATT-1",
+        "value": ">=80%",
+        "source_doc_id": "ACAD-2026-08",
+        "source_section": "1",
+        "parameter": "min_attendance_pct"
+      }
+    ],
+    "conflicts_detected": [
+      {
+        "topic": "min_attendance_pct",
+        "winner": {
+          "doc_id": "ACAD-2026-08",
+          "section": "1",
+          "value": "80",
+          "title": "Circular: Revised minimum attendance requirement",
+          "reason": null,
+          "effective_from": "2026-08-01"
+        },
+        "others": [
+          {
+            "doc_id": "ACAD-REG-2024",
+            "section": "7.2",
+            "value": "75",
+            "title": "Academic Regulations for B.Tech Programmes",
+            "reason": "replaced by ACAD-2026-08",
+            "effective_from": "2024-07-01"
+          },
+          {
+            "doc_id": "HELPDESK-FAQ-2026",
+            "section": "3",
+            "value": "65",
+            "title": "Student Help-desk FAQ 2026-27",
+            "reason": "lower authority",
+            "effective_from": "2026-09-15"
+          }
+        ],
+        "resolved_by": "step2_supersession"
+      }
+    ],
+    "explanation": "According to the circular, the minimum attendance required to appear in the end-semester examination is 80% in each course, and your attendance is below this threshold.",
+    "as_of_date": "2026-10-06",
+    "upcoming_changes": [],
+    "clarification_options": [],
+    "student_id": "S1007",
+    "meta": {
+      "cache_hit": false,
+      "cache": "miss",
+      "latency_ms": 2529,
+      "guardrail": null,
+      "output_redactions": [],
+      "groundedness": 1.0,
+      "session_id": null,
+      "standalone_question": null,
+      "rewrite": null,
+      "degraded": false,
+      "planner": "router_first",
+      "retrieval": "hybrid",
+      "llm_calls": 1,
+      "tokens": 1179,
+      "tokens_saved": 0
+    }
+  },
+  "audit_record": {
+    "trace_id": "517348dc",
+    "timestamp": "2026-10-06T08:27:43Z",
+    "student_id": "S1007",
+    "question": "Am I eligible to sit the Database Systems end-semester exam?",
+    "question_category": "personal_eligibility",
+    "as_of_date": "2026-10-06",
+    "sources_retrieved": [
+      {
+        "doc_id": "ACAD-REG-2024",
+        "section": "7.2",
+        "score": 0.675,
+        "label": "SUPERSEDED"
+      },
+      {
+        "doc_id": "ACAD-2026-08",
+        "section": "1",
+        "score": 0.638,
+        "label": "PRIMARY",
+        "anchor": true,
+        "dense_rank": 8,
+        "bm25_rank": 9
+      },
+      {
+        "doc_id": "ACAD-REG-2024",
+        "section": "8.4",
+        "score": 0.646,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 5,
+        "bm25_rank": 5
+      },
+      {
+        "doc_id": "ACAD-REG-2024",
+        "section": "8.3",
+        "score": 0.674,
+        "label": "PRIMARY",
+        "anchor": false,
+        "dense_rank": 3,
+        "bm25_rank": 8
+      },
+      {
+        "doc_id": "EXAM-SUPP-2025",
+        "section": "4",
+        "score": 0.666,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 4,
+        "bm25_rank": 10
+      },
+      {
+        "doc_id": "HELPDESK-FAQ-2026",
+        "section": "1",
+        "score": 0.633,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 13,
+        "bm25_rank": 4
+      },
+      {
+        "doc_id": "HELPDESK-FAQ-2026",
+        "section": "3",
+        "score": 0.692,
+        "label": "LOWER_PRECEDENCE",
+        "anchor": false,
+        "dense_rank": 1,
+        "bm25_rank": 1
+      },
+      {
+        "doc_id": "ACAD-REG-2024",
+        "section": "8.1",
+        "score": 0.636,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 11,
+        "bm25_rank": 6
+      },
+      {
+        "doc_id": "EXAM-SUPP-2025",
+        "section": null,
+        "score": 0.617,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 19,
+        "bm25_rank": 3
+      },
+      {
+        "doc_id": "ACAD-REG-2024",
+        "section": "8",
+        "score": 0.644,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 7,
+        "bm25_rank": 15
+      },
+      {
+        "doc_id": "ACAD-REG-2024",
+        "section": "5.1",
+        "score": 0.644,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 6,
+        "bm25_rank": 17
+      }
+    ],
+    "precedence_decision": "min_attendance_pct: ACAD-2026-08#1 applies; ACAD-2026-08 supersedes ACAD-REG-2024#7.2 (step 2); HELPDESK-FAQ-2026 loses on authority (step 3); ACAD-2026-08 supersedes ACAD-REG-2024#7.2 (step 2)",
+    "tools_invoked": [
+      {
+        "tool": "check_exam_eligibility",
+        "input": {
+          "course_code": "CS202"
+        },
+        "output": {
+          "result": "NOT_ELIGIBLE",
+          "classes_held": 59,
+          "classes_attended": 47,
+          "attendance_pct": 79.66,
+          "threshold": 80.0,
+          "rule_id": "AUTO-ACAD-2026-08-ATT-1",
+          "classes_needed": 1,
+          "projected_attended": 48,
+          "projected_held": 60
+        },
+        "status": "ok",
+        "ms": 0
+      }
+    ],
+    "applied_rules": [
+      {
+        "rule_id": "AUTO-ACAD-2026-08-ATT-1",
+        "value": ">=80%",
+        "source_doc_id": "ACAD-2026-08",
+        "source_section": "1",
+        "parameter": "min_attendance_pct"
+      }
+    ],
+    "conflicts_detected": [
+      {
+        "topic": "min_attendance_pct",
+        "winner": {
+          "doc_id": "ACAD-2026-08",
+          "section": "1",
+          "value": "80",
+          "title": "Circular: Revised minimum attendance requirement",
+          "reason": null,
+          "effective_from": "2026-08-01"
+        },
+        "others": [
+          {
+            "doc_id": "ACAD-REG-2024",
+            "section": "7.2",
+            "value": "75",
+            "title": "Academic Regulations for B.Tech Programmes",
+            "reason": "replaced by ACAD-2026-08",
+            "effective_from": "2024-07-01"
+          },
+          {
+            "doc_id": "HELPDESK-FAQ-2026",
+            "section": "3",
+            "value": "65",
+            "title": "Student Help-desk FAQ 2026-27",
+            "reason": "lower authority",
+            "effective_from": "2026-09-15"
+          }
+        ],
+        "resolved_by": "step2_supersession"
+      }
+    ],
+    "answer_type": "calculated",
+    "answer": "You are not eligible to sit the Database Systems (CS202) end-semester exam: your attendance is 79.66%, below the required 80%. Attending the next class would bring you to 48 of 60.",
+    "explanation": "According to the circular, the minimum attendance required to appear in the end-semester examination is 80% in each course, and your attendance is below this threshold.",
+    "citations": [
+      {
+        "doc_id": "ACAD-2026-08",
+        "title": "Circular: Revised minimum attendance requirement",
+        "section": "1",
+        "page": 1,
+        "version": "1",
+        "effective_from": "2026-08-01",
+        "quote": "1. With effect from 1 August 2026, the minimum attendance required to appear in the end-semester examination is raised to 80% in each course. This circular replaces clause 7.2 of the Academic\nRegulations (ACAD-REG-2024)."
+      }
+    ],
+    "model": "llama3.1:8b",
+    "llm_calls": 1,
+    "llm_cache_hits": 0,
+    "tokens": 1179,
+    "latency_ms": 2529,
+    "plan": {
+      "source": "router_first",
+      "category": "personal_eligibility",
+      "tools": [
+        "check_exam_eligibility"
+      ],
+      "rule_parameters": [
+        "min_attendance_pct"
+      ],
+      "search_queries": [
+        "Am I eligible to sit the Database Systems end-semester exam?"
+      ]
+    },
+    "retrieval": {
+      "mode": "hybrid",
+      "queries": [
+        "Am I eligible to sit the Database Systems end-semester exam?",
+        "Am I eligible to sit the Database Systems end-semester exam? (end-semester examination)"
+      ],
+      "glossary_expansion": [
+        "end-semester examination"
+      ],
+      "max_score": 0.692
+    },
+    "context_optimisation": {
+      "evidence_in": 5,
+      "evidence_out": 5,
+      "evidence_tokens_in": 238,
+      "evidence_tokens_out": 238,
+      "tokens_saved": 0,
+      "set_aside": [],
+      "duplicates": [],
+      "compressed": [],
+      "over_budget": []
+    },
+    "verification": {
+      "citations_valid": true,
+      "numbers_grounded": true,
+      "groundedness": 1.0,
+      "retries": 0,
+      "fallback": false,
+      "problems": []
+    },
+    "groundedness": 1.0,
+    "unsupported_sentences": [],
+    "guardrails": {
+      "input": {
+        "blocked": false,
+        "reason": null,
+        "findings": []
+      },
+      "output": []
+    },
+    "session": {
+      "id": null,
+      "rewrite": null,
+      "original_question": null
+    },
+    "cache": {
+      "hit": "miss"
+    },
+    "degraded": false,
+    "token_breakdown": {
+      "prompt": 1090,
+      "completion": 89
+    },
+    "latency_breakdown_ms": {
+      "guard": 0,
+      "plan": 0,
+      "authorize": 0,
+      "execute_tools": 0,
+      "retrieve": 60,
+      "compose": 2462,
+      "verify": 0
+    },
+    "notes": [],
+    "config": {
+      "embedder": "BAAI/bge-small-en-v1.5",
+      "chunker": "clause-v1",
+      "top_k": 5,
+      "tau": 0.68,
+      "retrieval_mode": "hybrid",
+      "reranker": "none",
+      "planner": "auto",
+      "context_budget_tokens": 1400,
+      "llm_provider": "ollama",
+      "llm_model": "llama3.1:8b"
+    }
+  }
+}

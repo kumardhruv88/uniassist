@@ -1,0 +1,220 @@
+{
+  "request": {
+    "question": "What is the hostel pet policy for dogs?",
+    "X-Student-Id": null,
+    "as_of_date": "2026-10-06"
+  },
+  "response": {
+    "trace_id": "45bd7764",
+    "answer": "I could not find this information in the authorised university sources.",
+    "answer_type": "not_found",
+    "citations": [],
+    "tools_invoked": [],
+    "applied_rules": [],
+    "conflicts_detected": [],
+    "explanation": "No authorised document in force on 2026-10-06 answers this question.",
+    "as_of_date": "2026-10-06",
+    "upcoming_changes": [],
+    "clarification_options": [],
+    "student_id": null,
+    "meta": {
+      "cache_hit": false,
+      "cache": "miss",
+      "latency_ms": 739,
+      "guardrail": null,
+      "output_redactions": [],
+      "groundedness": null,
+      "session_id": null,
+      "standalone_question": null,
+      "rewrite": null,
+      "degraded": false,
+      "planner": "llm",
+      "retrieval": "hybrid",
+      "llm_calls": 1,
+      "tokens": 732,
+      "tokens_saved": 0
+    }
+  },
+  "audit_record": {
+    "trace_id": "45bd7764",
+    "timestamp": "2026-10-06T08:27:27Z",
+    "student_id": null,
+    "question": "What is the hostel pet policy for dogs?",
+    "question_category": "other",
+    "as_of_date": "2026-10-06",
+    "sources_retrieved": [
+      {
+        "doc_id": "FEES-2026",
+        "section": "2",
+        "score": 0.632,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 1,
+        "bm25_rank": 1
+      },
+      {
+        "doc_id": "FEES-2026",
+        "section": "2",
+        "score": 0.627,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 2,
+        "bm25_rank": 2
+      },
+      {
+        "doc_id": "PLACE-POL-2025",
+        "section": "1",
+        "score": 0.591,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 3,
+        "bm25_rank": 3
+      },
+      {
+        "doc_id": "PLACE-POL-2025",
+        "section": null,
+        "score": 0.582,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 4,
+        "bm25_rank": 4
+      },
+      {
+        "doc_id": "PLACE-POL-2025",
+        "section": "5",
+        "score": 0.569,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 5,
+        "bm25_rank": null
+      },
+      {
+        "doc_id": "PLACE-POL-2025",
+        "section": "4",
+        "score": 0.56,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 6,
+        "bm25_rank": null
+      },
+      {
+        "doc_id": "PLACE-POL-2025",
+        "section": "2",
+        "score": 0.547,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 7,
+        "bm25_rank": null
+      },
+      {
+        "doc_id": "ACAD-REG-2024",
+        "section": "7.4",
+        "score": 0.534,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 8,
+        "bm25_rank": null
+      },
+      {
+        "doc_id": "ACAD-REG-2024",
+        "section": "5.2",
+        "score": 0.531,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 9,
+        "bm25_rank": null
+      },
+      {
+        "doc_id": "ACAD-REG-2024",
+        "section": "8.5",
+        "score": 0.529,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 10,
+        "bm25_rank": null
+      }
+    ],
+    "precedence_decision": "no conflicting sources",
+    "tools_invoked": [],
+    "applied_rules": [],
+    "conflicts_detected": [],
+    "answer_type": "not_found",
+    "answer": "I could not find this information in the authorised university sources.",
+    "explanation": "No authorised document in force on 2026-10-06 answers this question.",
+    "citations": [],
+    "model": "llama3.1:8b",
+    "llm_calls": 1,
+    "llm_cache_hits": 0,
+    "tokens": 732,
+    "latency_ms": 739,
+    "plan": {
+      "source": "llm",
+      "category": "other",
+      "tools": [],
+      "rule_parameters": [],
+      "search_queries": [
+        "hostel pet policy dogs",
+        "What is the hostel pet policy for dogs?"
+      ]
+    },
+    "retrieval": {
+      "mode": "hybrid",
+      "queries": [
+        "hostel pet policy dogs",
+        "What is the hostel pet policy for dogs?"
+      ],
+      "glossary_expansion": [],
+      "max_score": 0.632
+    },
+    "context_optimisation": null,
+    "verification": {
+      "citations_valid": true,
+      "numbers_grounded": true,
+      "retries": 0,
+      "fallback": false
+    },
+    "groundedness": null,
+    "unsupported_sentences": [],
+    "guardrails": {
+      "input": {
+        "blocked": false,
+        "reason": null,
+        "findings": []
+      },
+      "output": []
+    },
+    "session": {
+      "id": null,
+      "rewrite": null,
+      "original_question": null
+    },
+    "cache": {
+      "hit": "miss"
+    },
+    "degraded": false,
+    "token_breakdown": {
+      "prompt": 705,
+      "completion": 27
+    },
+    "latency_breakdown_ms": {
+      "guard": 0,
+      "plan": 653,
+      "authorize": 0,
+      "execute_tools": 0,
+      "retrieve": 10
+    },
+    "notes": [],
+    "config": {
+      "embedder": "BAAI/bge-small-en-v1.5",
+      "chunker": "clause-v1",
+      "top_k": 5,
+      "tau": 0.68,
+      "retrieval_mode": "hybrid",
+      "reranker": "none",
+      "planner": "auto",
+      "context_budget_tokens": 1400,
+      "llm_provider": "ollama",
+      "llm_model": "llama3.1:8b"
+    }
+  }
+}

@@ -1,0 +1,430 @@
+{
+  "request": {
+    "question": "Is 65% attendance enough if I have a medical certificate?",
+    "X-Student-Id": null,
+    "as_of_date": "2026-10-06"
+  },
+  "response": {
+    "trace_id": "8fe14ef3",
+    "answer": "No: 65% is below the 80% minimum, and condonation on medical grounds covers a shortage of at most 10%, so attendance must be at least 70% even with a medical certificate.",
+    "answer_type": "retrieved_fact",
+    "citations": [
+      {
+        "doc_id": "ACAD-REG-2024",
+        "title": "Academic Regulations for B.Tech Programmes",
+        "section": "7.3",
+        "page": 1,
+        "version": "3.1",
+        "effective_from": "2024-07-01",
+        "quote": "7.3 Condonation. Subject to clause 7.2, the Dean (Academics) may condone a shortage of attendance of up to 10% on medical grounds, supported by a medical certificate submitted within seven days of resuming classes. Condonation is not granted for laboratory courses."
+      },
+      {
+        "doc_id": "ACAD-2026-08",
+        "title": "Circular: Revised minimum attendance requirement",
+        "section": "1",
+        "page": 1,
+        "version": "1",
+        "effective_from": "2026-08-01",
+        "quote": "1. With effect from 1 August 2026, the minimum attendance required to appear in the end-semester examination is raised to 80% in each course. This circular replaces clause 7.2 of the Academic\nRegulations (ACAD-REG-2024)."
+      },
+      {
+        "doc_id": "ACAD-2026-08",
+        "title": "Circular: Revised minimum attendance requirement",
+        "section": "2",
+        "page": 1,
+        "version": "1",
+        "effective_from": "2026-08-01",
+        "quote": "2. Condonation under clause 7.3 of the Academic Regulations continues to apply on medical grounds."
+      }
+    ],
+    "tools_invoked": [
+      {
+        "tool": "check_attendance_value",
+        "input": {
+          "attendance_pct": "65",
+          "medical_certificate": true
+        },
+        "output": {
+          "minimum_pct": 80.0,
+          "rule_id": "AUTO-ACAD-2026-08-ATT-1",
+          "condonable_pct": 10.0,
+          "lowest_with_condonation_pct": 70.0,
+          "condonation_rule_id": "ATT-COND-01",
+          "result": "BELOW_CONDONABLE_FLOOR"
+        },
+        "status": "ok",
+        "ms": 0
+      }
+    ],
+    "applied_rules": [
+      {
+        "rule_id": "AUTO-ACAD-2026-08-ATT-1",
+        "value": ">=80%",
+        "source_doc_id": "ACAD-2026-08",
+        "source_section": "1",
+        "parameter": "min_attendance_pct"
+      },
+      {
+        "rule_id": "ATT-COND-01",
+        "value": "<=10%",
+        "source_doc_id": "ACAD-REG-2024",
+        "source_section": "7.3",
+        "parameter": "max_condonation_pct"
+      }
+    ],
+    "conflicts_detected": [
+      {
+        "topic": "min_attendance_pct",
+        "winner": {
+          "doc_id": "ACAD-2026-08",
+          "section": "1",
+          "value": "80",
+          "title": "Circular: Revised minimum attendance requirement",
+          "reason": null,
+          "effective_from": "2026-08-01"
+        },
+        "others": [
+          {
+            "doc_id": "ACAD-REG-2024",
+            "section": "7.2",
+            "value": "75",
+            "title": "Academic Regulations for B.Tech Programmes",
+            "reason": "replaced by ACAD-2026-08",
+            "effective_from": "2024-07-01"
+          },
+          {
+            "doc_id": "HELPDESK-FAQ-2026",
+            "section": "3",
+            "value": "65",
+            "title": "Student Help-desk FAQ 2026-27",
+            "reason": "lower authority",
+            "effective_from": "2026-09-15"
+          }
+        ],
+        "resolved_by": "step2_supersession"
+      }
+    ],
+    "explanation": "You need to have at least 80% attendance to appear in the end-semester examination, and even with a medical certificate, condonation on medical grounds covers a shortage of at most 10%, so your attendance must be at least 70%.",
+    "as_of_date": "2026-10-06",
+    "upcoming_changes": [],
+    "clarification_options": [],
+    "student_id": null,
+    "meta": {
+      "cache_hit": false,
+      "cache": "miss",
+      "latency_ms": 5294,
+      "guardrail": null,
+      "output_redactions": [],
+      "groundedness": 1.0,
+      "session_id": null,
+      "standalone_question": null,
+      "rewrite": null,
+      "degraded": false,
+      "planner": "router_first",
+      "retrieval": "hybrid",
+      "llm_calls": 2,
+      "tokens": 2475,
+      "tokens_saved": 0
+    }
+  },
+  "audit_record": {
+    "trace_id": "8fe14ef3",
+    "timestamp": "2026-10-06T08:27:26Z",
+    "student_id": null,
+    "question": "Is 65% attendance enough if I have a medical certificate?",
+    "question_category": "policy_fact",
+    "as_of_date": "2026-10-06",
+    "sources_retrieved": [
+      {
+        "doc_id": "ACAD-REG-2024",
+        "section": "7.2",
+        "score": 0.659,
+        "label": "SUPERSEDED"
+      },
+      {
+        "doc_id": "ACAD-REG-2024",
+        "section": "7.3",
+        "score": 0.775,
+        "label": "SOURCE",
+        "anchor": true,
+        "dense_rank": 2,
+        "bm25_rank": 2
+      },
+      {
+        "doc_id": "ACAD-2026-08",
+        "section": "1",
+        "score": 0.635,
+        "label": "PRIMARY",
+        "anchor": true,
+        "dense_rank": 7,
+        "bm25_rank": 10
+      },
+      {
+        "doc_id": "ACAD-2026-08",
+        "section": "2",
+        "score": 0.721,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 3,
+        "bm25_rank": 3
+      },
+      {
+        "doc_id": "ACAD-REG-2024",
+        "section": "7.1",
+        "score": 0.658,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 4,
+        "bm25_rank": 7
+      },
+      {
+        "doc_id": "ACAD-REG-2024",
+        "section": "7",
+        "score": 0.645,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 6,
+        "bm25_rank": 5
+      },
+      {
+        "doc_id": "ACAD-2026-08",
+        "section": "3",
+        "score": 0.646,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 5,
+        "bm25_rank": 9
+      },
+      {
+        "doc_id": "HELPDESK-FAQ-2026",
+        "section": "3",
+        "score": 0.898,
+        "label": "LOWER_PRECEDENCE",
+        "anchor": false,
+        "dense_rank": 1,
+        "bm25_rank": 1
+      },
+      {
+        "doc_id": "ACAD-2026-08",
+        "section": null,
+        "score": 0.622,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 8,
+        "bm25_rank": 12
+      },
+      {
+        "doc_id": "HELPDESK-FAQ-2026",
+        "section": "2",
+        "score": 0.552,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 21,
+        "bm25_rank": 4
+      },
+      {
+        "doc_id": "ACAD-REG-2024",
+        "section": "7.4",
+        "score": 0.54,
+        "label": "SOURCE",
+        "anchor": false,
+        "dense_rank": 22,
+        "bm25_rank": 8
+      }
+    ],
+    "precedence_decision": "min_attendance_pct: ACAD-2026-08#1 applies; ACAD-2026-08 supersedes ACAD-REG-2024#7.2 (step 2); HELPDESK-FAQ-2026 loses on authority (step 3); max_condonation_pct: ACAD-REG-2024#7.3 applies; ACAD-2026-08 supersedes ACAD-REG-2024#7.2 (step 2)",
+    "tools_invoked": [
+      {
+        "tool": "check_attendance_value",
+        "input": {
+          "attendance_pct": "65",
+          "medical_certificate": true
+        },
+        "output": {
+          "minimum_pct": 80.0,
+          "rule_id": "AUTO-ACAD-2026-08-ATT-1",
+          "condonable_pct": 10.0,
+          "lowest_with_condonation_pct": 70.0,
+          "condonation_rule_id": "ATT-COND-01",
+          "result": "BELOW_CONDONABLE_FLOOR"
+        },
+        "status": "ok",
+        "ms": 0
+      }
+    ],
+    "applied_rules": [
+      {
+        "rule_id": "AUTO-ACAD-2026-08-ATT-1",
+        "value": ">=80%",
+        "source_doc_id": "ACAD-2026-08",
+        "source_section": "1",
+        "parameter": "min_attendance_pct"
+      },
+      {
+        "rule_id": "ATT-COND-01",
+        "value": "<=10%",
+        "source_doc_id": "ACAD-REG-2024",
+        "source_section": "7.3",
+        "parameter": "max_condonation_pct"
+      }
+    ],
+    "conflicts_detected": [
+      {
+        "topic": "min_attendance_pct",
+        "winner": {
+          "doc_id": "ACAD-2026-08",
+          "section": "1",
+          "value": "80",
+          "title": "Circular: Revised minimum attendance requirement",
+          "reason": null,
+          "effective_from": "2026-08-01"
+        },
+        "others": [
+          {
+            "doc_id": "ACAD-REG-2024",
+            "section": "7.2",
+            "value": "75",
+            "title": "Academic Regulations for B.Tech Programmes",
+            "reason": "replaced by ACAD-2026-08",
+            "effective_from": "2024-07-01"
+          },
+          {
+            "doc_id": "HELPDESK-FAQ-2026",
+            "section": "3",
+            "value": "65",
+            "title": "Student Help-desk FAQ 2026-27",
+            "reason": "lower authority",
+            "effective_from": "2026-09-15"
+          }
+        ],
+        "resolved_by": "step2_supersession"
+      }
+    ],
+    "answer_type": "retrieved_fact",
+    "answer": "No: 65% is below the 80% minimum, and condonation on medical grounds covers a shortage of at most 10%, so attendance must be at least 70% even with a medical certificate.",
+    "explanation": "You need to have at least 80% attendance to appear in the end-semester examination, and even with a medical certificate, condonation on medical grounds covers a shortage of at most 10%, so your attendance must be at least 70%.",
+    "citations": [
+      {
+        "doc_id": "ACAD-REG-2024",
+        "title": "Academic Regulations for B.Tech Programmes",
+        "section": "7.3",
+        "page": 1,
+        "version": "3.1",
+        "effective_from": "2024-07-01",
+        "quote": "7.3 Condonation. Subject to clause 7.2, the Dean (Academics) may condone a shortage of attendance of up to 10% on medical grounds, supported by a medical certificate submitted within seven days of resuming classes. Condonation is not granted for laboratory courses."
+      },
+      {
+        "doc_id": "ACAD-2026-08",
+        "title": "Circular: Revised minimum attendance requirement",
+        "section": "1",
+        "page": 1,
+        "version": "1",
+        "effective_from": "2026-08-01",
+        "quote": "1. With effect from 1 August 2026, the minimum attendance required to appear in the end-semester examination is raised to 80% in each course. This circular replaces clause 7.2 of the Academic\nRegulations (ACAD-REG-2024)."
+      },
+      {
+        "doc_id": "ACAD-2026-08",
+        "title": "Circular: Revised minimum attendance requirement",
+        "section": "2",
+        "page": 1,
+        "version": "1",
+        "effective_from": "2026-08-01",
+        "quote": "2. Condonation under clause 7.3 of the Academic Regulations continues to apply on medical grounds."
+      }
+    ],
+    "model": "llama3.1:8b",
+    "llm_calls": 2,
+    "llm_cache_hits": 0,
+    "tokens": 2475,
+    "latency_ms": 5294,
+    "plan": {
+      "source": "router_first",
+      "category": "policy_fact",
+      "tools": [],
+      "rule_parameters": [
+        "min_attendance_pct",
+        "max_condonation_pct"
+      ],
+      "search_queries": [
+        "Is 65% attendance enough if I have a medical certificate?"
+      ]
+    },
+    "retrieval": {
+      "mode": "hybrid",
+      "queries": [
+        "Is 65% attendance enough if I have a medical certificate?",
+        "Is 65% attendance enough if I have a medical certificate? (condonation medical)"
+      ],
+      "glossary_expansion": [
+        "condonation medical"
+      ],
+      "max_score": 0.898
+    },
+    "context_optimisation": {
+      "evidence_in": 5,
+      "evidence_out": 5,
+      "evidence_tokens_in": 195,
+      "evidence_tokens_out": 195,
+      "tokens_saved": 0,
+      "set_aside": [],
+      "duplicates": [],
+      "compressed": [],
+      "over_budget": []
+    },
+    "verification": {
+      "citations_valid": true,
+      "numbers_grounded": true,
+      "groundedness": 1.0,
+      "retries": 1,
+      "fallback": false,
+      "problems": []
+    },
+    "groundedness": 1.0,
+    "unsupported_sentences": [],
+    "guardrails": {
+      "input": {
+        "blocked": false,
+        "reason": null,
+        "findings": []
+      },
+      "output": []
+    },
+    "session": {
+      "id": null,
+      "rewrite": null,
+      "original_question": null
+    },
+    "cache": {
+      "hit": "miss"
+    },
+    "degraded": false,
+    "token_breakdown": {
+      "prompt": 2257,
+      "completion": 218
+    },
+    "latency_breakdown_ms": {
+      "guard": 0,
+      "plan": 0,
+      "authorize": 0,
+      "execute_tools": 0,
+      "retrieve": 11,
+      "compose": 2868,
+      "verify": 0,
+      "compose_retry": 2265,
+      "verify_retry": 0
+    },
+    "notes": [],
+    "config": {
+      "embedder": "BAAI/bge-small-en-v1.5",
+      "chunker": "clause-v1",
+      "top_k": 5,
+      "tau": 0.68,
+      "retrieval_mode": "hybrid",
+      "reranker": "none",
+      "planner": "auto",
+      "context_budget_tokens": 1400,
+      "llm_provider": "ollama",
+      "llm_model": "llama3.1:8b"
+    }
+  }
+}
