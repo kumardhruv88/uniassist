@@ -1,0 +1,120 @@
+"""Deterministic checks on the composer's draft. Every number must be traceable; citations must be evidence."""
+from __future__ import annotations
+
+import json
+import re
+from decimal import Decimal, InvalidOperation
+
+DOC_ID = re.compile(r"\b[A-Z][A-Z0-9]*(?:[-_][A-Z0-9]+)+\b")
+ISO_DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b")
+WORD_DATE = re.compile(r"\b\d{1,2}(?:st|nd|rd|th)?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?,?\s+\d{4}\b"
+                       r"|\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4}\b", re.I)
+COURSE = re.compile(r"\b[A-Z]{2,4}\s?\d{3}\b")
+EVID = re.compile(r"\[?\bE\d{1,2}\b\]?")
+SECTION = re.compile(r"(?:§|clause|section|rule|para(?:graph)?)\s*\d+(?:\.\d+)*", re.I)
+NUM = re.compile(r"(?<![\w.])(\d+(?:\.\d+)?)(?![\w])")
+ELIG = re.compile(r"\byou (?:are|'re|would be|will be|are not|aren't|would not be|won't be)\s+(?:not\s+)?(?:yet\s+)?eligible\b", re.I)
+SID = re.compile(r"\bS\d{4}\b")
+
+
+def _strip(text: str) -> str:
+    for rx in (EVID, WORD_DATE, ISO_DATE, DOC_ID, COURSE, SECTION):
+        text = rx.sub(" ", text)
+    return text
+
+
+def _norm(n: str) -> str:
+    try:
+        return format(Decimal(n).normalize(), "f")
+    except InvalidOperation:
+        return n
+
+
+def numbers(text: str) -> set[str]:
+    return {_norm(n) for n in NUM.findall(_strip(text))}
+
+
+def strip_markers(text: str) -> str:
+    return re.sub(r"\s{2,}", " ", re.sub(r"\s*\[(?:E\d{1,2}(?:\s*,\s*)?)+\]", "", text)).strip()
+
+
+def check_draft(draft, *, evidence_ids: set[str], allowed_sources: list[str], verdict: str | None,
+                self_id: str | None, needs_citation: bool) -> list[str]:
+    problems: list[str] = []
+    cited = [e for e in draft.evidence_ids if e in evidence_ids]
+    bogus = [e for e in draft.evidence_ids if e not in evidence_ids]
+    if bogus:
+        problems.append(f"evidence_ids {bogus} were not provided; cite only the given ids")
+    if needs_citation and not draft.insufficient_evidence and not cited:
+        problems.append("cite at least one evidence id that supports the answer")
+    allowed = set().union(*(numbers(s) for s in allowed_sources)) if allowed_sources else set()
+    text = f"{draft.answer} {draft.explanation}"
+    unknown = sorted(n for n in numbers(text) if n not in allowed and not (n.isdigit() and int(n) <= 10))
+    if unknown:
+        problems.append(f"these numbers are not in the verdict, records, rules or evidence: {', '.join(unknown)}")
+    if verdict is None and ELIG.search(text):
+        problems.append("do not state eligibility: no verdict was computed for this question")
+    problems += [f"false comparison: '{c}'" for c in false_comparisons(text)]
+    others = {s for s in SID.findall(text) if s != self_id}
+    if others:
+        problems.append(f"do not mention other student IDs ({', '.join(sorted(others))})")
+    return problems
+
+
+def sources_for_grounding(question: str, verdict: str | None, tool_results, rule_texts: list[str], evidence) -> list[str]:
+    out = [question, verdict or ""] + rule_texts
+    out += [json.dumps(t.output, default=str) for t in tool_results]
+    out += [e.text for e in evidence]
+    return out
+
+
+WORD = re.compile(r"[a-z]+|\d+(?:\.\d+)?")
+STOP = set("the and for that with this from are was were you your have has not can may must will shall into each any its "
+           "which who what when where how there their them they our out all but per also been being than then".split())
+
+
+def infer_citations(text: str, evidence, k: int = 2, min_overlap: float = 0.35) -> list[str]:
+    """When the model omits evidence_ids, cite the retrieved evidence that the answer's own words come from."""
+    words = {w for w in WORD.findall(text.lower()) if (len(w) > 2 and w not in STOP) or w[0].isdigit()}
+    if not words:
+        return []
+    scored = []
+    for e in evidence:
+        if e.label == "INFORMATIONAL":
+            continue
+        overlap = len(words & set(WORD.findall(e.text.lower()))) / len(words)
+        scored.append((overlap, e.eid))
+    return [eid for ov, eid in sorted(scored, reverse=True)[:k] if ov >= min_overlap]
+
+
+CMP = re.compile(r"(\d+(?:\.\d+)?)\s*%[^.;]{0,60}?\b(below|less than|under|lower than|short of|above|more than|"
+                 r"exceeds|exceeding|over|higher than|meets|meeting|at least|equal to)\b[^.;\d]{0,40}?(\d+(?:\.\d+)?)\s*%", re.I)
+
+
+def false_comparisons(text: str) -> list[str]:
+    """Catch arithmetic the model got wrong, e.g. '79.66%, which is below the required 75%'."""
+    bad = []
+    for m in CMP.finditer(text):
+        a, word, b = Decimal(m.group(1)), m.group(2).lower(), Decimal(m.group(3))
+        below = word in ("below", "less than", "under", "lower than", "short of")
+        above = word in ("above", "more than", "exceeds", "exceeding", "over", "higher than")
+        meets = word in ("meets", "meeting", "at least", "equal to")
+        if (below and not a < b) or (above and not a > b) or (meets and not a >= b):
+            bad.append(m.group(0).strip())
+    return bad
+
+
+GENERIC = STOP | set("student students university college course courses exam exams examination semester rule rules "
+                     "policy please tell know about there much many more what which minimum maximum required "
+                     "need allowed get give take".split())
+
+
+def evidence_coverage(question: str, evidence) -> float:
+    """Share of the question's distinctive terms that appear anywhere in the retrieved evidence (prefix match)."""
+    terms = {w for w in WORD.findall(question.lower()) if len(w) > 2 and w not in GENERIC and not w.isdigit()}
+    if not terms:
+        return 1.0
+    words = set(WORD.findall(" ".join(e.text for e in evidence).lower()))
+    pre = {w[:4] for w in words if len(w) >= 4}
+    hit = {t for t in terms if t in words or (len(t) >= 4 and t[:4] in pre)}
+    return len(hit) / len(terms)
