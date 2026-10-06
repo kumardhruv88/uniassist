@@ -69,11 +69,14 @@ LLM: **Ollama `llama3.1:8b`** (already pulled on this machine). `[x]` = built, `
 - [x] AI-usage disclosure (`AI_USAGE.md`: development tools, runtime models, generated data; team review section to fill)
 - [x] Team contribution statement (`CONTRIBUTIONS.md`: Garv = frontend, Manish = LangGraph orchestration, Dhruv = eval + production RAG; rest to fill)
 - [x] Signed declaration of original work (`DECLARATION.md`, to sign)
-- [~] GitHub: https://github.com/kumardhruv88/uniassist (public). History authored per member with GitHub no-reply addresses and the Claude co-author trailer; dates not backdated
+- [~] GitHub: https://github.com/kumardhruv88/uniassist (public). History authored per member with GitHub no-reply addresses; dates not backdated. Claude co-author lines removed from every commit at the team's request (AI use stays disclosed in `AI_USAGE.md`)
   - Manish Kumar (`m4nish-dev`): 13 commits, the core end-to-end build including LangGraph orchestration
   - Dhruv Kumar (`kumardhruv88`): production-RAG layer, synthetic data, golden dataset + eval, docs
   - Garv Bahl (`garvbahl37-gif`): frontend UI/UX
   - Branches `garv`, `dhruv`, `manish` created from `main` for each member's work; merge back through pull requests
+  - [x] Collaborator access granted on kumardhruv88/uniassist
+  - [x] Pushed `main`, `garv`, `dhruv`, `manish` (34 commits)
+  - [ ] Force-push the rewritten history (same content, Claude lines removed) from your terminal: `git push --force-with-lease origin main garv dhruv manish`
 - [ ] Rotate the GitHub tokens shared during setup
 
 ## Guide §9: judging readiness

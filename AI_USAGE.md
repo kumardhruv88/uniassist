@@ -11,7 +11,7 @@ The team built this project with AI assistance. This file says where AI was used
 | React frontend (`frontend/`) | Claude Code | Generated on the team's prompts, with a design brief and screenshot critique passes |
 | Evaluation suite (`eval/`) and golden dataset | Claude Code | Items written against the guide's evaluation buckets; expected values checked by `eval/verify_golden.py` against the corpus and the synthetic records |
 
-Commits made with Claude Code carry a `Co-Authored-By: Claude` trailer. `CONTRIBUTIONS.md` says which team member directed which part.
+`CONTRIBUTIONS.md` says which team member directed which part. Commit authorship in the repository follows the same split, and this file is where the AI assistance behind those commits is disclosed.
 
 **To be completed by the team:** what you reviewed, changed or decided yourselves, and anything you rejected from the AI's output.
 
