@@ -159,6 +159,9 @@ Each item names the technique used. `[x]` built and tested, `[~]` in progress, `
 - [x] Verifier: an unsupported negative claim ("you do not need to attend …") is rejected; conflict explanations are written by code, never by the model
 - [ ] Team rehearsal with the same pack before the judges (`JUDGE_TEST_GUIDE.pdf`)
 
+### Live-use fixes
+- [x] Personal questions without "my" are recognised: "how many backlogs i have", "do I have any backlogs", "what marks did I get", "am I detained", "how much attendance do i have" (was answered "not on record"); "how many classes have I attended" reads attendance instead of projecting; 11 regression tests; the 146 golden questions route as before (only ADV6 changes, and the guardrail refuses it first)
+
 ### Project explainer
 - [x] `docs/UNIASSIST_EXPLAINED.md/.pdf`: the whole project in five plain-language pages (what it does, how a question is answered, conflicts, safety and honesty, proof and results, running it), with two diagrams and three live screenshots
 - [x] Dates written in the question set `as_of` when the request has none ("As of 2026-12-10", "in October 2026")

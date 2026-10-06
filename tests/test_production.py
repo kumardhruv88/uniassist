@@ -342,3 +342,22 @@ def test_eval_driven_fixes():
     q, how, _ = contextualize("Am I eligible for its end-semester exam then?",                               # FU3b
                               [Turn("What is my attendance in Data Structures?", "calculated", "CS201")], courses, llm=None)
     assert how == "course_carry" and "Data Structures" in q and "CS201" in q
+
+
+@pytest.mark.parametrize("q,tool", [
+    ("how many backlogs i have", "get_student_profile"), ("do I have any backlogs?", "get_student_profile"),
+    ("my current backlogs?", "get_student_profile"), ("how many arrears do i have", "get_student_profile"),
+    ("what marks did I get in Data Structures?", "get_results"), ("how much attendance do i have in CS201", "get_attendance"),
+    ("how many classes have I attended in CS201?", "get_attendance"),
+])
+def test_personal_phrasings_without_my_are_personal(q, tool):
+    from app.llm.planner import route
+    p = route(q)
+    assert p.category == "personal_data" and p.tools == [tool]
+
+
+@pytest.mark.parametrize("q", ["What happens if I fail a course?", "Is 65% attendance enough if I have a medical certificate?",
+                               "How many backlogs are allowed for placements?", "How do I apply for the supplementary exam?"])
+def test_policy_questions_in_first_person_stay_general(q):
+    from app.llm.planner import route
+    assert route(q).category not in ("personal_data", "personal_eligibility", "multi_step")

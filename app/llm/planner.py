@@ -70,8 +70,15 @@ def build_prompt(question: str) -> tuple[str, str]:
 # ----------------------------------------------------------------------------- deterministic router (fallback + cross-check)
 # Personal = asks about MY record, or about MY eligibility. A first-person hypothetical about policy
 # ("Is 65% enough if I have a medical certificate?") is a policy question, not a personal one.
-PERSONAL_DATA_RE = re.compile(r"\bmy\s+(?:own\s+)?(?:attendance|marks?|results?|grades?|cgpa|gpa|backlogs?|records?|scores?|"
-                              r"eligibility|courses?|semester)\b|\bhow many (?:classes|lectures) (?:have|did) i\b", re.I)
+_DATA = r"(?:attendance|marks?|results?|grades?|cgpa|gpa|backlogs?|arrears?|kts?|records?|scores?|eligibility|courses?|subjects?|semester|credits?)"
+PERSONAL_DATA_RE = re.compile(
+    rf"\bmy\s+(?:\w+\s+){{0,2}}{_DATA}\b"                                        # my (current) backlogs
+    rf"|\bhow (?:many|much)\s+(?:\w+\s+){{0,2}}{_DATA}\b[^?.]{{0,20}}?\b(?:do |have |did )?i\s+"
+    rf"(?:have|got|get|attended|missed|failed|passed|cleared|scored)\b"              # how many backlogs (do) i have
+    rf"|\bhow many (?:classes|lectures) (?:have|did) i\b"
+    rf"|\b(?:do|did|have)\s+i\s+(?:have\s+|got\s+)?(?:any\s+)?{_DATA}\b"         # do I have any backlogs
+    rf"|\b(?:what|which)\s+(?:\w+\s+){{0,2}}(?:did|have)\s+i\s+(?:score|scored|get|got|fail|failed|pass|passed|clear|cleared)\b"
+    rf"|\bam i\s+(?:\w+\s+){{0,2}}(?:detained|debarred|failing|failed)\b", re.I)  # what marks did I get; am I detained
 PERSONAL_ELIG_RE = re.compile(r"\b(?:am i|can i|will i|could i|do i|would i|may i|shall i|should i|i am|i'm)\b[^?.]{0,50}?"
                               r"\b(?:eligible|qualif\w*|sit|appear|write|take|give|attempt|register|allowed|permitted|attend|miss|skip|bunk|pass|clear)\b"
                               r"|\bi (?:failed|passed|have \d+ backlogs?)\b|\bif i pass\b", re.I)
@@ -83,9 +90,10 @@ T = {
     "supplementary": re.compile(r"supplementar|re-?exam|re-?appear|repeat exam|make-?up exam", re.I),
     "placement": re.compile(r"placement|recruit|campus drive|company|companies", re.I),
     "results": re.compile(r"\b(result|marks?|grade|score|scored|passed|failed|pass mark|passing)\b", re.I),
-    "profile": re.compile(r"\b(cgpa|gpa|backlogs?)\b", re.I),
+    "profile": re.compile(r"\b(cgpa|gpa|backlogs?|arrears?|kts?)\b", re.I),
     "whatif": re.compile(r"\bif i\b|suppose|assuming|what if|would i", re.I),
-    "projection": re.compile(r"how many (more )?(classes|lectures)|can i (miss|skip|bunk)|afford to miss", re.I),
+    "projection": re.compile(r"how many (?:more )?(?:classes|lectures)\s+(?:can|could|should|must|do|would|will|need)\b"
+                             r"|can i (?:miss|skip|bunk)|afford to miss|need to attend|have to attend", re.I),
     "procedure": re.compile(r"\bhow (do|can|to|should)\b|procedure|process|steps|apply|application|register for", re.I),
     "fees": re.compile(r"\bfees?\b|tuition|hostel|charges?", re.I),
 }
