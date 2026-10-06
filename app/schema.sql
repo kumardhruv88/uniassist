@@ -102,3 +102,20 @@ CREATE TABLE IF NOT EXISTS audit_log (                               -- added
   record_json        TEXT NOT NULL
 ) STRICT;
 CREATE INDEX IF NOT EXISTS ix_audit_ts ON audit_log(ts);
+
+CREATE TABLE IF NOT EXISTS kv (                                       -- added: data version for cache invalidation
+  key    TEXT PRIMARY KEY,
+  value  TEXT NOT NULL
+) STRICT;
+INSERT OR IGNORE INTO kv (key, value) VALUES ('data_version', '1');
+
+CREATE TABLE IF NOT EXISTS security_events (                          -- added: guardrail blocks, rate limits, abuse
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts          TEXT NOT NULL,
+  client      TEXT NOT NULL,
+  student_id  TEXT,
+  kind        TEXT NOT NULL,
+  detail      TEXT NOT NULL,
+  trace_id    TEXT
+) STRICT;
+CREATE INDEX IF NOT EXISTS ix_sec_ts ON security_events(ts);

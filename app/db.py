@@ -51,3 +51,14 @@ def rows(con: sqlite3.Connection, sql: str, args: tuple | dict = ()) -> list[dic
 def one(con: sqlite3.Connection, sql: str, args: tuple | dict = ()) -> dict | None:
     r = con.execute(sql, args).fetchone()
     return dict(r) if r else None
+
+
+def bump_data_version(con: sqlite3.Connection) -> None:
+    """Called in the same transaction as any write that can change an answer (ingest, rules, students)."""
+    con.execute("UPDATE kv SET value = CAST(CAST(value AS INTEGER) + 1 AS TEXT) WHERE key = 'data_version'")
+
+
+def data_version() -> str:
+    with session() as con:
+        r = one(con, "SELECT value FROM kv WHERE key = 'data_version'")
+    return r["value"] if r else "0"
