@@ -5,6 +5,7 @@ import hashlib
 import math
 import re
 import threading
+from collections import OrderedDict
 
 BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 
@@ -27,6 +28,9 @@ class HashEmbedder:
     def embed_query(self, text: str) -> list[float]:
         return self._vec(text)
 
+    def embed_queries(self, texts: list[str]) -> list[list[float]]:
+        return [self._vec(t) for t in texts]
+
 
 class STEmbedder:
     def __init__(self, model_name: str):
@@ -35,14 +39,30 @@ class STEmbedder:
         self.model = SentenceTransformer(model_name)
         self.prefix = BGE_QUERY_PREFIX if "bge" in model_name.lower() else ""
         self._lock = threading.Lock()
+        self._cache: OrderedDict[str, list[float]] = OrderedDict()
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
         with self._lock:
             return self.model.encode(texts, normalize_embeddings=True, batch_size=32, show_progress_bar=False).tolist()
 
     def embed_query(self, text: str) -> list[float]:
+        return self.embed_queries([text])[0]
+
+    def embed_queries(self, texts: list[str]) -> list[list[float]]:
+        """One batched forward pass for all query variants; repeated queries come from an LRU cache."""
         with self._lock:
-            return self.model.encode([self.prefix + text], normalize_embeddings=True, show_progress_bar=False)[0].tolist()
+            todo = list(dict.fromkeys(t for t in texts if t not in self._cache))
+            if todo:
+                vecs = self.model.encode([self.prefix + t for t in todo], normalize_embeddings=True,
+                                         batch_size=16, show_progress_bar=False).tolist()
+                self._cache.update(zip(todo, vecs))
+            out = []
+            for t in texts:
+                self._cache.move_to_end(t)
+                out.append(self._cache[t])
+            while len(self._cache) > 2048:
+                self._cache.popitem(last=False)
+            return out
 
 
 _cache: dict[str, object] = {}
