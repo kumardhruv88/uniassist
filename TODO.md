@@ -151,7 +151,14 @@ Each item names the technique used. `[x]` built and tested, `[~]` in progress, `
 ### Aster University test pack (judge rehearsal)
 - [x] 13 synthetic documents built from the test manifest (`eval/adversarial/pack/`, `make_pack.py`): baseline, supersession, exact duplicate, false FAQ, unofficial post, future-dated rule, out-of-scope B.Arch, visible + hidden injection, tied fee circulars, scanned OCR notice, irrelevant library hours, keyword-stuffed post
 - [x] One `.meta.json` per document, plus `JUDGE_TEST_GUIDE.md/.pdf`: clean-instance setup, upload order, 11 questions with expected answers
-- [ ] Live test by the team in front of the judges (not run by us, at the team's request); `run_pack.py` automates the same checks
+- [x] Live test through the real UI in a visible browser (Playwright, `frontend/scripts/aster-live-test.mjs`): all 13 documents uploaded with "Fill the fields from a metadata file", 11 questions + duplicate + injection checks: **13/13 pass** (screenshots and results in `eval/adversarial/ui-run/`)
+- [x] Tesseract 5.5.3 installed locally (Homebrew), so scanned pages are read outside Docker too; the demo corpus' scanned hostel notice is now indexed (4 chunks)
+- [x] Parser: OCR for scanned images on pages that also have printed text; a warning when an image cannot be read; Annex B metadata header tables are not indexed as policy text
+- [x] Verifier: an unsupported negative claim ("you do not need to attend …") is rejected; conflict explanations are written by code, never by the model
+- [ ] Team rehearsal with the same pack before the judges (`JUDGE_TEST_GUIDE.pdf`)
+
+### Project explainer
+- [x] `docs/UNIASSIST_EXPLAINED.md/.pdf`: the whole project in five plain-language pages (what it does, how a question is answered, conflicts, safety and honesty, proof and results, running it), with two diagrams and three live screenshots
 - [x] Dates written in the question set `as_of` when the request has none ("As of 2026-12-10", "in October 2026")
 - [x] Programme and batch written in the question scope policy answers ("for B.Arch batch 2025"); personal tools keep the student's own scope
 - [x] Equal-rank, same-date sources stating different amounts give `conflict_flagged` with both cited (fees and other non-rule facts)
