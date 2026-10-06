@@ -1,0 +1,354 @@
+{
+  "label": "A",
+  "kind": "full",
+  "timestamp": "2026-10-06T08:51:02.600003+00:00",
+  "note": "{\"preset\": \"A\", \"description\": \"baseline: all-MiniLM-L6-v2 + fixed 800-char chunks, dense retrieval only, no glossary expansion\", \"env\": {\"RATE_LIMIT_ENABLED\": \"false\", \"LLM_CACHE\": \"false\", \"SEMANTIC_CACHE\": \"false\", \"ANSWER_CACHE\": \"true\", \"EMBED_MODEL\": \"sentence-transformers/all-MiniLM-L6-v2\", \"CHUNKER\": \"fixed-800\", \"RETRIEVAL_MODE\": \"dense\", \"RERANKER\": \"none\", \"QUERY_EXPANSION\": \"false\", \"RUNTIME_DIR\": \"data/runtime-A\", \"TAU\": \"0.397\"}, \"tau\": \"tau=0.397 calibrated on 76 items (accuracy 0.921)\"}",
+  "dataset": "eval/golden.yaml",
+  "dataset_sha1": "6ada2ccf04b5",
+  "items": 144,
+  "skipped": 2,
+  "errors": 0,
+  "run_seconds": 410,
+  "config": {
+    "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+    "top_k": 5,
+    "tau": 0.397,
+    "llm_provider": "ollama",
+    "llm_model": "llama3.1:8b",
+    "llm_fallback_model": null,
+    "cloud_fallback": false,
+    "retrieval_mode": "dense",
+    "reranker": "none",
+    "planner": "auto",
+    "context_budget_tokens": 1400
+  },
+  "config_audit": {
+    "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+    "chunker": "fixed-800",
+    "top_k": 5,
+    "tau": 0.397,
+    "retrieval_mode": "dense",
+    "reranker": "none",
+    "planner": "auto",
+    "context_budget_tokens": 1400,
+    "llm_provider": "ollama",
+    "llm_model": "llama3.1:8b"
+  },
+  "answer_correctness_pct": 77.8,
+  "answer_type_accuracy_pct": 86.1,
+  "citation_accuracy_pct": 1.4,
+  "citation_doc_accuracy_pct": 91.4,
+  "cited_expected_source_pct": 1.6,
+  "abstention_accuracy_pct": 90.5,
+  "abstention_recall_pct": 85.7,
+  "false_abstention_pct": 8.8,
+  "tool_result_correctness_pct": 65.9,
+  "retrieval_hit_rate_pct": 1.4,
+  "retrieval_hit_at10_pct": 1.4,
+  "retrieval_doc_hit_rate_pct": 94.2,
+  "retrieval_mrr": 0.014,
+  "refusal_accuracy_pct": 90.0,
+  "over_refusal_pct": 0.0,
+  "injection_resistance_pct": 100.0,
+  "guardrail_accuracy_pct": 91.7,
+  "cache_hit_rate_pct": 100.0,
+  "unexpected_cache_hits": 0,
+  "followup_accuracy_pct": 60.0,
+  "hallucination_rate_pct": 2.1,
+  "hallucinations": 3,
+  "hallucination_opportunities": 30,
+  "groundedness_mean": 0.887,
+  "groundedness_n": 98,
+  "latency_p50_ms": 3329,
+  "latency_p95_ms": 6023,
+  "latency_mean_ms": 2882,
+  "latency_p50_all_ms": 3329,
+  "latency_p95_all_ms": 6023,
+  "cache_hit_latency_mean_ms": 0.5,
+  "llm_calls_mean": 1.347,
+  "tokens_mean": 1265,
+  "llm_calls_mean_uncached": 1.366,
+  "tokens_mean_uncached": 1283,
+  "llm_calls_total": 194,
+  "tokens_total": 182194,
+  "fallback_answers": 4,
+  "degraded_answers": 0,
+  "by_bucket": {
+    "policy_fact": 83.3,
+    "cache": 100.0,
+    "procedure": 50.0,
+    "unanswerable": 90.0,
+    "off_topic": 100.0,
+    "versions_conflicts": 44.4,
+    "personal_tools": 93.3,
+    "other_student": 100.0,
+    "bulk_pii": 80.0,
+    "multi_step": 71.4,
+    "safety": 100.0,
+    "clarification": 100.0,
+    "adversarial": 81.8,
+    "abuse": 100.0,
+    "follow_up": 70.0
+  },
+  "by_bucket_n": {
+    "policy_fact": 42,
+    "cache": 3,
+    "procedure": 10,
+    "unanswerable": 10,
+    "off_topic": 2,
+    "versions_conflicts": 18,
+    "personal_tools": 15,
+    "other_student": 5,
+    "bulk_pii": 5,
+    "multi_step": 7,
+    "safety": 2,
+    "clarification": 3,
+    "adversarial": 11,
+    "abuse": 1,
+    "follow_up": 10
+  },
+  "by_difficulty": {
+    "medium": {
+      "n": 56,
+      "correct_pct": 75.0
+    },
+    "easy": {
+      "n": 65,
+      "correct_pct": 90.8
+    },
+    "hard": {
+      "n": 23,
+      "correct_pct": 47.8
+    }
+  },
+  "by_tag": {
+    "attendance": {
+      "n": 30,
+      "correct_pct": 56.7
+    },
+    "version": {
+      "n": 8,
+      "correct_pct": 100.0
+    },
+    "supersession": {
+      "n": 2,
+      "correct_pct": 50.0
+    },
+    "grading": {
+      "n": 6,
+      "correct_pct": 100.0
+    },
+    "fees": {
+      "n": 17,
+      "correct_pct": 88.2
+    },
+    "table": {
+      "n": 12,
+      "correct_pct": 83.3
+    },
+    "cache": {
+      "n": 3,
+      "correct_pct": 100.0
+    },
+    "placement": {
+      "n": 14,
+      "correct_pct": 100.0
+    },
+    "supplementary": {
+      "n": 17,
+      "correct_pct": 76.5
+    },
+    "paraphrase": {
+      "n": 14,
+      "correct_pct": 50.0
+    },
+    "informal": {
+      "n": 13,
+      "correct_pct": 46.2
+    },
+    "faq": {
+      "n": 6,
+      "correct_pct": 50.0
+    },
+    "definitions": {
+      "n": 3,
+      "correct_pct": 66.7
+    },
+    "scope": {
+      "n": 2,
+      "correct_pct": 50.0
+    },
+    "condonation": {
+      "n": 9,
+      "correct_pct": 55.6
+    },
+    "what_if": {
+      "n": 8,
+      "correct_pct": 62.5
+    },
+    "boundary": {
+      "n": 10,
+      "correct_pct": 70.0
+    },
+    "cross_reference": {
+      "n": 5,
+      "correct_pct": 60.0
+    },
+    "backlogs": {
+      "n": 4,
+      "correct_pct": 75.0
+    },
+    "registration": {
+      "n": 1,
+      "correct_pct": 100.0
+    },
+    "abstain": {
+      "n": 14,
+      "correct_pct": 85.7
+    },
+    "near_miss": {
+      "n": 4,
+      "correct_pct": 75.0
+    },
+    "off_topic": {
+      "n": 2,
+      "correct_pct": 100.0
+    },
+    "as_of": {
+      "n": 10,
+      "correct_pct": 60.0
+    },
+    "conflict": {
+      "n": 4,
+      "correct_pct": 0.0
+    },
+    "authority": {
+      "n": 3,
+      "correct_pct": 33.3
+    },
+    "personal": {
+      "n": 6,
+      "correct_pct": 16.7
+    },
+    "not_yet_in_force": {
+      "n": 2,
+      "correct_pct": 50.0
+    },
+    "ece": {
+      "n": 2,
+      "correct_pct": 50.0
+    },
+    "rounding": {
+      "n": 3,
+      "correct_pct": 66.7
+    },
+    "date": {
+      "n": 1,
+      "correct_pct": 100.0
+    },
+    "results": {
+      "n": 1,
+      "correct_pct": 100.0
+    },
+    "refusal": {
+      "n": 10,
+      "correct_pct": 90.0
+    },
+    "privacy": {
+      "n": 8,
+      "correct_pct": 100.0
+    },
+    "exfiltration": {
+      "n": 5,
+      "correct_pct": 80.0
+    },
+    "bulk": {
+      "n": 4,
+      "correct_pct": 75.0
+    },
+    "pii": {
+      "n": 1,
+      "correct_pct": 100.0
+    },
+    "projection": {
+      "n": 3,
+      "correct_pct": 33.3
+    },
+    "arithmetic": {
+      "n": 1,
+      "correct_pct": 0.0
+    },
+    "document_injection": {
+      "n": 1,
+      "correct_pct": 100.0
+    },
+    "identity": {
+      "n": 1,
+      "correct_pct": 100.0
+    },
+    "clarification": {
+      "n": 3,
+      "correct_pct": 100.0
+    },
+    "ambiguous_course": {
+      "n": 1,
+      "correct_pct": 100.0
+    },
+    "injection": {
+      "n": 8,
+      "correct_pct": 75.0
+    },
+    "jailbreak": {
+      "n": 3,
+      "correct_pct": 100.0
+    },
+    "privilege": {
+      "n": 2,
+      "correct_pct": 100.0
+    },
+    "encoding": {
+      "n": 2,
+      "correct_pct": 100.0
+    },
+    "prompt_extraction": {
+      "n": 1,
+      "correct_pct": 0.0
+    },
+    "obfuscation": {
+      "n": 1,
+      "correct_pct": 100.0
+    },
+    "social_engineering": {
+      "n": 1,
+      "correct_pct": 0.0
+    },
+    "sql": {
+      "n": 1,
+      "correct_pct": 100.0
+    },
+    "multilingual": {
+      "n": 1,
+      "correct_pct": 100.0
+    },
+    "abuse": {
+      "n": 1,
+      "correct_pct": 100.0
+    },
+    "session": {
+      "n": 10,
+      "correct_pct": 70.0
+    },
+    "follow_up": {
+      "n": 4,
+      "correct_pct": 50.0
+    },
+    "coreference": {
+      "n": 1,
+      "correct_pct": 0.0
+    },
+    "isolation": {
+      "n": 2,
+      "correct_pct": 100.0
+    }
+  }
+}

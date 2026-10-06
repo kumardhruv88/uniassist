@@ -1,0 +1,214 @@
+{
+  "label": "A",
+  "kind": "calibration",
+  "timestamp": "2026-10-06T08:44:04.046562+00:00",
+  "note": "tau calibration pass; baseline: all-MiniLM-L6-v2 + fixed 800-char chunks, dense retrieval only, no glossary expansion",
+  "dataset": "eval/golden.yaml",
+  "dataset_sha1": "6ada2ccf04b5",
+  "items": 76,
+  "skipped": 2,
+  "errors": 0,
+  "run_seconds": 112,
+  "config": {
+    "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+    "top_k": 5,
+    "tau": 0.68,
+    "llm_provider": "ollama",
+    "llm_model": "llama3.1:8b",
+    "llm_fallback_model": null,
+    "cloud_fallback": false,
+    "retrieval_mode": "dense",
+    "reranker": "none",
+    "planner": "auto",
+    "context_budget_tokens": 1400
+  },
+  "config_audit": {
+    "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+    "chunker": "fixed-800",
+    "top_k": 5,
+    "tau": 0.68,
+    "retrieval_mode": "dense",
+    "reranker": "none",
+    "planner": "auto",
+    "context_budget_tokens": 1400,
+    "llm_provider": "ollama",
+    "llm_model": "llama3.1:8b"
+  },
+  "answer_correctness_pct": 36.8,
+  "answer_type_accuracy_pct": 43.4,
+  "citation_accuracy_pct": 0.0,
+  "citation_doc_accuracy_pct": 100.0,
+  "cited_expected_source_pct": 0.0,
+  "abstention_accuracy_pct": 43.4,
+  "abstention_recall_pct": 100.0,
+  "false_abstention_pct": 69.4,
+  "tool_result_correctness_pct": 25.0,
+  "retrieval_hit_rate_pct": 1.6,
+  "retrieval_hit_at10_pct": 1.6,
+  "retrieval_doc_hit_rate_pct": 100.0,
+  "retrieval_mrr": 0.016,
+  "refusal_accuracy_pct": null,
+  "over_refusal_pct": 0.0,
+  "injection_resistance_pct": null,
+  "guardrail_accuracy_pct": null,
+  "cache_hit_rate_pct": null,
+  "unexpected_cache_hits": 0,
+  "followup_accuracy_pct": null,
+  "hallucination_rate_pct": 0.0,
+  "hallucinations": 0,
+  "hallucination_opportunities": 16,
+  "groundedness_mean": 0.833,
+  "groundedness_n": 19,
+  "latency_p50_ms": 711,
+  "latency_p95_ms": 4143,
+  "latency_mean_ms": 1465,
+  "latency_p50_all_ms": 711,
+  "latency_p95_all_ms": 4143,
+  "cache_hit_latency_mean_ms": null,
+  "llm_calls_mean": 1.211,
+  "tokens_mean": 987,
+  "llm_calls_mean_uncached": 1.211,
+  "tokens_mean_uncached": 987,
+  "llm_calls_total": 92,
+  "tokens_total": 75024,
+  "fallback_answers": 1,
+  "degraded_answers": 0,
+  "by_bucket": {
+    "policy_fact": 26.2,
+    "procedure": 10.0,
+    "unanswerable": 100.0,
+    "off_topic": 100.0,
+    "versions_conflicts": 33.3
+  },
+  "by_bucket_n": {
+    "policy_fact": 42,
+    "procedure": 10,
+    "unanswerable": 10,
+    "off_topic": 2,
+    "versions_conflicts": 12
+  },
+  "by_difficulty": {
+    "medium": {
+      "n": 27,
+      "correct_pct": 22.2
+    },
+    "easy": {
+      "n": 39,
+      "correct_pct": 41.0
+    },
+    "hard": {
+      "n": 10,
+      "correct_pct": 60.0
+    }
+  },
+  "by_tag": {
+    "attendance": {
+      "n": 16,
+      "correct_pct": 18.8
+    },
+    "version": {
+      "n": 8,
+      "correct_pct": 50.0
+    },
+    "supersession": {
+      "n": 2,
+      "correct_pct": 50.0
+    },
+    "grading": {
+      "n": 6,
+      "correct_pct": 0.0
+    },
+    "fees": {
+      "n": 15,
+      "correct_pct": 53.3
+    },
+    "table": {
+      "n": 10,
+      "correct_pct": 40.0
+    },
+    "placement": {
+      "n": 7,
+      "correct_pct": 42.9
+    },
+    "supplementary": {
+      "n": 11,
+      "correct_pct": 54.5
+    },
+    "paraphrase": {
+      "n": 10,
+      "correct_pct": 20.0
+    },
+    "informal": {
+      "n": 8,
+      "correct_pct": 25.0
+    },
+    "faq": {
+      "n": 6,
+      "correct_pct": 16.7
+    },
+    "definitions": {
+      "n": 3,
+      "correct_pct": 0.0
+    },
+    "scope": {
+      "n": 1,
+      "correct_pct": 100.0
+    },
+    "condonation": {
+      "n": 9,
+      "correct_pct": 11.1
+    },
+    "what_if": {
+      "n": 4,
+      "correct_pct": 25.0
+    },
+    "boundary": {
+      "n": 4,
+      "correct_pct": 50.0
+    },
+    "cross_reference": {
+      "n": 5,
+      "correct_pct": 20.0
+    },
+    "backlogs": {
+      "n": 2,
+      "correct_pct": 0.0
+    },
+    "registration": {
+      "n": 1,
+      "correct_pct": 0.0
+    },
+    "abstain": {
+      "n": 14,
+      "correct_pct": 100.0
+    },
+    "near_miss": {
+      "n": 4,
+      "correct_pct": 100.0
+    },
+    "off_topic": {
+      "n": 2,
+      "correct_pct": 100.0
+    },
+    "as_of": {
+      "n": 6,
+      "correct_pct": 66.7
+    },
+    "conflict": {
+      "n": 4,
+      "correct_pct": 0.0
+    },
+    "authority": {
+      "n": 2,
+      "correct_pct": 0.0
+    },
+    "not_yet_in_force": {
+      "n": 2,
+      "correct_pct": 100.0
+    },
+    "date": {
+      "n": 1,
+      "correct_pct": 0.0
+    }
+  }
+}

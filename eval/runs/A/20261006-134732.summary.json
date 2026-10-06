@@ -1,0 +1,210 @@
+{
+  "label": "A",
+  "kind": "calibration",
+  "timestamp": "2026-10-06T08:19:10.852379+00:00",
+  "note": "tau calibration pass; baseline: all-MiniLM-L6-v2 + fixed 800-char chunks, dense retrieval only, no glossary expansion",
+  "dataset": "eval/golden.yaml",
+  "dataset_sha1": "884e8426f6c9",
+  "items": 72,
+  "skipped": 2,
+  "errors": 0,
+  "run_seconds": 98,
+  "config": {
+    "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+    "top_k": 5,
+    "tau": 0.68,
+    "llm_provider": "ollama",
+    "llm_model": "llama3.1:8b",
+    "llm_fallback_model": null,
+    "cloud_fallback": false,
+    "retrieval_mode": "dense",
+    "reranker": "none",
+    "planner": "auto",
+    "context_budget_tokens": 1400
+  },
+  "config_audit": {
+    "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+    "chunker": "fixed-800",
+    "top_k": 5,
+    "tau": 0.68,
+    "retrieval_mode": "dense",
+    "reranker": "none",
+    "planner": "auto",
+    "context_budget_tokens": 1400,
+    "llm_provider": "ollama",
+    "llm_model": "llama3.1:8b"
+  },
+  "answer_correctness_pct": 37.5,
+  "answer_type_accuracy_pct": 44.4,
+  "citation_accuracy_pct": 0.0,
+  "citation_doc_accuracy_pct": 100.0,
+  "cited_expected_source_pct": 0.0,
+  "abstention_accuracy_pct": 44.4,
+  "abstention_recall_pct": 100.0,
+  "false_abstention_pct": 69.0,
+  "tool_result_correctness_pct": null,
+  "retrieval_hit_rate_pct": 1.8,
+  "retrieval_hit_at10_pct": 1.8,
+  "retrieval_doc_hit_rate_pct": 100.0,
+  "retrieval_mrr": 0.018,
+  "refusal_accuracy_pct": null,
+  "over_refusal_pct": 0.0,
+  "injection_resistance_pct": null,
+  "guardrail_accuracy_pct": null,
+  "cache_hit_rate_pct": null,
+  "unexpected_cache_hits": 0,
+  "followup_accuracy_pct": null,
+  "hallucination_rate_pct": 0.0,
+  "hallucinations": 0,
+  "hallucination_opportunities": 16,
+  "groundedness_mean": 0.824,
+  "groundedness_n": 18,
+  "latency_p50_ms": 665,
+  "latency_p95_ms": 3589,
+  "latency_mean_ms": 1359,
+  "latency_p50_all_ms": 665,
+  "latency_p95_all_ms": 3589,
+  "cache_hit_latency_mean_ms": null,
+  "llm_calls_mean": 1.292,
+  "tokens_mean": 1028,
+  "llm_calls_mean_uncached": 1.292,
+  "tokens_mean_uncached": 1028,
+  "llm_calls_total": 93,
+  "tokens_total": 74040,
+  "fallback_answers": 1,
+  "degraded_answers": 0,
+  "by_bucket": {
+    "policy_fact": 28.2,
+    "procedure": 10.0,
+    "unanswerable": 100.0,
+    "off_topic": 100.0,
+    "versions_conflicts": 27.3
+  },
+  "by_bucket_n": {
+    "policy_fact": 39,
+    "procedure": 10,
+    "unanswerable": 10,
+    "off_topic": 2,
+    "versions_conflicts": 11
+  },
+  "by_difficulty": {
+    "medium": {
+      "n": 26,
+      "correct_pct": 23.1
+    },
+    "easy": {
+      "n": 38,
+      "correct_pct": 42.1
+    },
+    "hard": {
+      "n": 8,
+      "correct_pct": 62.5
+    }
+  },
+  "by_tag": {
+    "attendance": {
+      "n": 13,
+      "correct_pct": 23.1
+    },
+    "version": {
+      "n": 7,
+      "correct_pct": 42.9
+    },
+    "supersession": {
+      "n": 2,
+      "correct_pct": 50.0
+    },
+    "grading": {
+      "n": 6,
+      "correct_pct": 0.0
+    },
+    "fees": {
+      "n": 15,
+      "correct_pct": 53.3
+    },
+    "table": {
+      "n": 10,
+      "correct_pct": 40.0
+    },
+    "placement": {
+      "n": 7,
+      "correct_pct": 42.9
+    },
+    "supplementary": {
+      "n": 11,
+      "correct_pct": 54.5
+    },
+    "paraphrase": {
+      "n": 10,
+      "correct_pct": 20.0
+    },
+    "informal": {
+      "n": 7,
+      "correct_pct": 28.6
+    },
+    "faq": {
+      "n": 6,
+      "correct_pct": 16.7
+    },
+    "definitions": {
+      "n": 3,
+      "correct_pct": 0.0
+    },
+    "scope": {
+      "n": 1,
+      "correct_pct": 100.0
+    },
+    "condonation": {
+      "n": 6,
+      "correct_pct": 0.0
+    },
+    "cross_reference": {
+      "n": 5,
+      "correct_pct": 20.0
+    },
+    "backlogs": {
+      "n": 2,
+      "correct_pct": 0.0
+    },
+    "registration": {
+      "n": 1,
+      "correct_pct": 0.0
+    },
+    "abstain": {
+      "n": 14,
+      "correct_pct": 100.0
+    },
+    "near_miss": {
+      "n": 4,
+      "correct_pct": 100.0
+    },
+    "off_topic": {
+      "n": 2,
+      "correct_pct": 100.0
+    },
+    "as_of": {
+      "n": 5,
+      "correct_pct": 60.0
+    },
+    "conflict": {
+      "n": 4,
+      "correct_pct": 0.0
+    },
+    "authority": {
+      "n": 2,
+      "correct_pct": 0.0
+    },
+    "boundary": {
+      "n": 2,
+      "correct_pct": 50.0
+    },
+    "not_yet_in_force": {
+      "n": 2,
+      "correct_pct": 100.0
+    },
+    "date": {
+      "n": 1,
+      "correct_pct": 0.0
+    }
+  }
+}

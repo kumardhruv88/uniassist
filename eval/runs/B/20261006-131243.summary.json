@@ -1,0 +1,35 @@
+{
+  "label": "B",
+  "timestamp": "2026-10-06T07:42:43.912573+00:00",
+  "items": 37,
+  "config": {
+    "embedder": "BAAI/bge-small-en-v1.5",
+    "top_k": 5,
+    "tau": 0.68,
+    "llm_provider": "ollama",
+    "llm_model": "llama3.1:8b"
+  },
+  "answer_correctness_pct": 81.1,
+  "answer_type_accuracy_pct": 94.6,
+  "citation_accuracy_pct": 75.0,
+  "abstention_accuracy_pct": 97.3,
+  "tool_result_correctness_pct": 92.3,
+  "retrieval_hit_rate_pct": 92.3,
+  "refusal_accuracy_pct": 100.0,
+  "latency_p50_ms": 13,
+  "latency_p95_ms": 20,
+  "llm_calls_mean": 0,
+  "tokens_mean": 0,
+  "fallback_answers": 26,
+  "by_bucket": {
+    "policy_fact": 66.7,
+    "procedure": 0.0,
+    "unanswerable": 100.0,
+    "versions_conflicts": 83.3,
+    "personal_tools": 87.5,
+    "other_student": 100.0,
+    "multi_step": 100.0,
+    "safety": 100.0,
+    "clarification": 100.0
+  }
+}
