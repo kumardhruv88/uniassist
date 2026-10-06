@@ -430,7 +430,7 @@ export function eligibilityScenario(studentId: string, course: string, asOf: str
   const upcomingSentence =
     regime.threshold === 75 ? ' A circular raising the minimum to 80% takes effect on 1 August 2026.' : ''
   const explanation = degraded
-    ? `Minimum attendance: at least ${regime.threshold}% (${regime.docId} §${regime.section}). Your attendance in ${course}: ${attended} of ${held} classes = ${pctText}.`
+    ? `Minimum attendance: at least ${regime.threshold}% (${regime.docId}, section ${regime.section}). Your attendance in ${course}: ${attended} of ${held} classes = ${pctText}.`
     : `${ruleSentence} ${recordSentence}${upcomingSentence}`
 
   const tool: ToolInvocation = {
@@ -611,7 +611,7 @@ export function whatIfScenario(value: number, medical: boolean, asOf: string): S
         },
       ],
       conflicts_detected: [regime.conflict],
-      explanation: `The minimum is ${minimum}% (${regime.docId} §${regime.section}). Clause 7.3 of the Academic Regulations lets the Dean condone a shortage of up to ${condonable}% on medical grounds, with a certificate submitted within seven days of returning to classes.`,
+      explanation: `The minimum is ${minimum}% (${regime.docId}, section ${regime.section}). Clause 7.3 of the Academic Regulations lets the Dean condone a shortage of up to ${condonable}% on medical grounds, with a certificate submitted within seven days of returning to classes.`,
     },
     audit: {
       question_category: 'policy_fact',
@@ -681,7 +681,7 @@ export function supplementaryScenario(): Scenario {
         { doc_id: 'EXAM-SUPP-2025', section: '4', score: 0.81, label: 'PRIMARY', dense_rank: 2, bm25_rank: 1 },
         { doc_id: 'HELPDESK-FAQ-2026', section: '5', score: 0.66, label: 'LOWER_PRECEDENCE', dense_rank: 3, bm25_rank: 5 },
       ],
-      precedence_decision: 'EXAM-SUPP-2025 applies; HELPDESK-FAQ-2026 §5 agrees and loses on authority (step 3)',
+      precedence_decision: 'EXAM-SUPP-2025 applies; HELPDESK-FAQ-2026, section 5 agrees and loses on authority (step 3)',
       search_queries: ['supplementary examination application procedure', 'supplementary exam fee deadline'],
       plan_tools: [],
       planner: 'llm',

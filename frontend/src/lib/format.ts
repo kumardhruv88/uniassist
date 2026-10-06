@@ -110,18 +110,17 @@ export function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-/** "7.2" -> "§7.2". Leaves labels such as "Annex B" or "Page 3" alone. */
+/** "7.2" -> "Section 7.2". Leaves labels such as "Annex B" or "Page 3" alone. */
 export function sectionLabel(section: string | null | undefined): string {
   if (!section) return ''
-  const trimmed = section.trim()
-  if (trimmed.startsWith('§')) return trimmed
-  return /^[\dA-Za-z]{1,4}(\.[\dA-Za-z]+)*$/.test(trimmed) ? `§${trimmed}` : trimmed
+  const trimmed = section.trim().replace(/^§+\s*/, '')
+  return /^[\dA-Za-z]{1,4}(\.[\dA-Za-z]+)*$/.test(trimmed) ? `Section ${trimmed}` : trimmed
 }
 
-/** "ACAD-REG-2024#7.2" -> "ACAD-REG-2024 §7.2". */
+/** "ACAD-REG-2024#7.2" -> "ACAD-REG-2024, section 7.2". */
 export function formatDocRef(ref: string): string {
   const [doc, section] = ref.split('#')
-  return section ? `${doc ?? ''} ${sectionLabel(section)}` : (doc ?? ref)
+  return section ? `${doc ?? ''}, ${sectionLabel(section).replace(/^Section /, 'section ')}` : (doc ?? ref)
 }
 
 /** "personal_eligibility" -> "Personal eligibility". */

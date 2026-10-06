@@ -156,6 +156,29 @@ function emptyForm(): DocForm {
   }
 }
 
+/** Fill the form from an Annex B metadata file (the .meta.json that ships with a document). */
+function formFromMetadata(raw: Record<string, unknown>, current: DocForm): DocForm {
+  const str = (v: unknown) => (v === null || v === undefined ? '' : String(v).trim())
+  const type = str(raw.doc_type).toLowerCase()
+  return {
+    ...current,
+    doc_id: str(raw.doc_id) || current.doc_id,
+    title: str(raw.title) || current.title,
+    issuer: str(raw.issuer) || current.issuer,
+    authority_level: str(raw.authority_level) || current.authority_level,
+    doc_type: (DOC_TYPES.some((t) => t.value === type) ? type : current.doc_type) as DocForm['doc_type'],
+    version: str(raw.version),
+    effective_from: str(raw.effective_from),
+    effective_to: str(raw.effective_to),
+    supersedes: str(raw.supersedes),
+    scope_programmes: str(raw.scope_programmes) || 'ALL',
+    scope_batches: str(raw.scope_batches) || 'ALL',
+    provenance: str(raw.provenance),
+    retrieved_on: str(raw.retrieved_on) || current.retrieved_on,
+    synthetic: str(raw.synthetic).toUpperCase() === 'Y' ? 'Y' : 'N',
+  }
+}
+
 const DOC_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{1,63}$/
 const ACCEPTED_EXTENSIONS = ACCEPTED_FILE_TYPES.split(',')
 
@@ -238,6 +261,7 @@ function AddDocumentPanel({ onClose, onAdded, canClose }: { onClose: () => void;
   const [fileKey, setFileKey] = useState(0)
   const [errors, setErrors] = useState<FormErrors>({})
   const [dragging, setDragging] = useState(false)
+  const [metaNote, setMetaNote] = useState<string | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const headingId = useId()
   const fileHintId = useId()
@@ -252,6 +276,7 @@ function AddDocumentPanel({ onClose, onAdded, canClose }: { onClose: () => void;
         setForm(emptyForm())
         setFile(null)
         setFileKey((k) => k + 1)
+        setMetaNote(null)
       }
     },
   })
@@ -266,6 +291,18 @@ function AddDocumentPanel({ onClose, onAdded, canClose }: { onClose: () => void;
   function chooseFile(next: File | null) {
     setFile(next)
     if (errors.file) setErrors((e) => ({ ...e, file: undefined }))
+  }
+
+  async function fillFromMetadata(metaFile: File | null) {
+    if (!metaFile) return
+    try {
+      const raw = JSON.parse(await metaFile.text()) as Record<string, unknown>
+      setForm((current) => formFromMetadata(raw, current))
+      setErrors({})
+      setMetaNote(`Fields filled from ${metaFile.name}. Check them, then add the document.`)
+    } catch {
+      setMetaNote(`${metaFile.name} is not valid JSON, so nothing was filled.`)
+    }
   }
 
   function onSubmit(event: FormEvent) {
@@ -346,6 +383,17 @@ function AddDocumentPanel({ onClose, onAdded, canClose }: { onClose: () => void;
             </span>
           </label>
           {errors.file ? <p className="field-error">{errors.file}</p> : null}
+          <label className="text-button mt-2 inline-block cursor-pointer">
+            <input
+              key={`meta-${fileKey}`}
+              type="file"
+              accept=".json,application/json"
+              className="sr-only"
+              onChange={(e) => void fillFromMetadata(e.target.files?.[0] ?? null)}
+            />
+            Fill the fields from a metadata file (.json)
+          </label>
+          {metaNote ? <p className="text-meta text-ink-muted">{metaNote}</p> : null}
         </div>
 
         <FormField label="Document ID" error={errors.doc_id} required hint="For example ACAD-2026-09. Reusing an ID replaces that document.">

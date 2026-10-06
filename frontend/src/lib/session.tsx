@@ -155,7 +155,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setFailure(null)
 
       api
-        .ask({ question, as_of_date: asOfDate }, { studentId, sessionId, signal: controller.signal })
+        // Send the date only when it was changed from today, so a date written in the question
+        // ("As of 2026-12-10, ...") is the one the API applies.
+        .ask({ question, ...(asOfDate !== today ? { as_of_date: asOfDate } : {}) }, { studentId, sessionId, signal: controller.signal })
         .then((response) => {
           if (inFlight.current !== controller) return
           inFlight.current = null
@@ -186,7 +188,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           })
         })
     },
-    [asOfDate, conversationId, queryClient, studentId],
+    [asOfDate, conversationId, queryClient, studentId, today],
   )
 
   const cancel = useCallback(() => {
