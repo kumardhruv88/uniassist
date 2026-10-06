@@ -1,0 +1,6 @@
+rule_id,description,parameter,operator,value,scope_programmes,scope_batches,effective_from,effective_to,source_doc_id,source_section,unit
+ATT-MIN-01,Minimum attendance in each course to sit its end-semester examination,min_attendance_pct,>=,75,B.Tech,ALL,2024-07-01,,ACAD-REG-2024,7.2,pct
+PASS-MIN-01,Minimum aggregate marks to pass a course,pass_min_total_pct,>=,40,B.Tech,ALL,2024-07-01,,ACAD-REG-2024,8.2,pct
+SUPP-ELIG-01,Results that may register for a supplementary examination,supplementary_allowed_results,in,FAIL;ABSENT,B.Tech,ALL,2024-07-01,,ACAD-REG-2024,8.3,list
+PLC-CGPA-01,Minimum CGPA to register for campus placements,min_cgpa_placement,>=,6.5,ALL,2023+,2025-06-01,,PLACE-POL-2025,3,cgpa
+PLC-BKLG-01,Maximum active backlogs to register for campus placements,max_active_backlogs_placement,<=,0,ALL,2023+,2025-06-01,,PLACE-POL-2025,3,count

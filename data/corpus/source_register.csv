@@ -1,0 +1,8 @@
+doc_id,title,issuer,authority_level,doc_type,version,effective_from,effective_to,supersedes,scope_programmes,scope_batches,provenance,retrieved_on,synthetic,file
+ACAD-REG-2024,Academic Regulations for B.Tech Programmes,Office of the Dean (Academics),1,regulation,3.1,2024-07-01,,ACAD-REG-2021#7.2,B.Tech,ALL,DEV SAMPLE - replace with your university's public document (URL),2026-10-06,Y,ACAD-REG-2024.pdf
+EXAM-SUPP-2025,Circular: Supplementary Examinations - Eligibility and Fees,Office of the Controller of Examinations,2,circular,1,2025-01-15,,,ALL,ALL,DEV SAMPLE - replace with your university's public document (URL),2026-10-06,Y,EXAM-SUPP-2025.pdf
+PLACE-POL-2025,Training and Placement Policy,Office of the Dean (Training and Placement),2,circular,2.0,2025-06-01,,,ALL,2023+,DEV SAMPLE - replace with your university's public document (URL),2026-10-06,Y,PLACE-POL-2025.pdf
+FEES-2026,Fee Structure for the Academic Year 2026-27,"Office of the Registrar, Finance Section",2,circular,1,2026-07-01,,,ALL,ALL,DEV SAMPLE - replace with your university's public document (URL),2026-10-06,Y,FEES-2026.pdf
+HOSTEL-NOTICE-2025,Notice: Hostel timings and visitors (scanned),"Office of the Chief Warden, Hostels",3,notice,1,2025-08-01,,,ALL,ALL,DEV SAMPLE (scanned page) - replace with your university's public document (URL),2026-10-06,Y,HOSTEL-NOTICE-2025.pdf
+HELPDESK-FAQ-2026,Student Help-desk FAQ 2026-27,Student Services Office,4,faq,1,2026-09-15,,,ALL,ALL,DEV SAMPLE - replace with your university's public document (URL),2026-10-06,Y,HELPDESK-FAQ-2026.docx
+SC-POST-2026,Student council notice board post,Student Council,5,unofficial,,2026-09-20,,,ALL,ALL,Synthetic test document 2 of 2: unofficial claim + embedded instruction,2026-10-06,Y,SC-POST-2026.txt
