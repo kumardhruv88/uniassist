@@ -1,0 +1,41 @@
+[project]
+name = "uniassist"
+version = "0.1.0"
+description = "AI-Powered University Student Services Assistant (HCLTech Future Ready AI Engineer Hackathon)"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "pydantic>=2.7",
+  "pydantic-settings>=2.3",
+  "python-multipart>=0.0.9",
+  "langgraph>=0.2.50",
+  "chromadb>=0.5.20",
+  "sentence-transformers>=3.0",
+  "pymupdf>=1.24",
+  "pytesseract>=0.3.10",
+  "pillow>=10",
+  "python-docx>=1.1",
+  "beautifulsoup4>=4.12",
+  "httpx>=0.27",
+  "pyyaml>=6",
+  "torch>=2.4",  # direct only so [tool.uv.sources] can route it to the CPU wheel index on Linux
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "pytest-asyncio>=0.23"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.uv]
+package = false
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
