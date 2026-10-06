@@ -128,7 +128,15 @@ def resolve_course(ctx: ToolContext, mention: str) -> tuple[str | None, list[dic
 def get_student_profile(ctx: ToolContext) -> ToolResult:
     s = ctx.student
     out = {k: s[k] for k in ("programme", "batch_year", "current_semester", "cgpa", "active_backlogs")}
-    verdict = f"Your CGPA is {s['cgpa']:.2f} and you have {s['active_backlogs']} active backlog{'s' if s['active_backlogs'] != 1 else ''}."
+    courses = sorted(student_courses(ctx), key=lambda c: (c["semester"] or 0, c["course_code"]))
+    names = {c["course_code"]: _name(c) for c in courses}
+    backlog = current_backlogs(ctx)
+    out.update(backlog_courses=[names.get(c, c) for c in backlog], courses=[names[c["course_code"]] for c in courses],
+               total_courses=len(courses))
+    n = s["active_backlogs"]
+    verdict = f"Your CGPA is {s['cgpa']:.2f} and you have {n} active backlog{'s' if n != 1 else ''}"
+    verdict += (f": {', '.join(out['backlog_courses'])}." if backlog else ".")
+    verdict += f" You have {len(courses)} course{'s' if len(courses) != 1 else ''} on record: {', '.join(out['courses'])}."
     return ToolResult("get_student_profile", {}, out, decisive=True, verdict=verdict)
 
 

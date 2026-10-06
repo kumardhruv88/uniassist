@@ -162,6 +162,9 @@ Each item names the technique used. `[x]` built and tested, `[~]` in progress, `
 ### Live-use fixes
 - [x] Personal questions without "my" are recognised: "how many backlogs i have", "do I have any backlogs", "what marks did I get", "am I detained", "how much attendance do i have" (was answered "not on record"); "how many classes have I attended" reads attendance instead of projecting; 11 regression tests; the 146 golden questions route as before (only ADV6 changes, and the guardrail refuses it first)
 
+- [x] "what subjects i have backlogs in … total number of subjects" answered: the profile tool now lists backlog subjects and every course on record; informal "<subjects> i have" phrasing and subject-list questions route to it
+- [x] Students page says the 40 synthetic students are already loaded, so nothing needs uploading for the demo
+
 ### Project explainer
 - [x] `docs/UNIASSIST_EXPLAINED.md/.pdf`: the whole project in five plain-language pages (what it does, how a question is answered, conflicts, safety and honesty, proof and results, running it), with two diagrams and three live screenshots
 - [x] Dates written in the question set `as_of` when the request has none ("As of 2026-12-10", "in October 2026")

@@ -361,3 +361,13 @@ def test_personal_phrasings_without_my_are_personal(q, tool):
 def test_policy_questions_in_first_person_stay_general(q):
     from app.llm.planner import route
     assert route(q).category not in ("personal_data", "personal_eligibility", "multi_step")
+
+
+def test_subject_list_questions_use_the_profile(client):
+    from app.llm.planner import route
+    for q in ["what subjects i have backlogs in also tell me total number of subjects i have", "which subjects i failed",
+              "how many subjects do i have"]:
+        assert route(q).tools == ["get_student_profile"], q
+    a = ask(client, "what subjects i have backlogs in also tell me total number of subjects i have", "S1001")
+    out = a["tools_invoked"][0]["output"]
+    assert a["answer_type"] == "calculated" and out["total_courses"] == 2 and "courses" in out and "backlog_courses" in out

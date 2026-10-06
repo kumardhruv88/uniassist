@@ -78,7 +78,9 @@ PERSONAL_DATA_RE = re.compile(
     rf"|\bhow many (?:classes|lectures) (?:have|did) i\b"
     rf"|\b(?:do|did|have)\s+i\s+(?:have\s+|got\s+)?(?:any\s+)?{_DATA}\b"         # do I have any backlogs
     rf"|\b(?:what|which)\s+(?:\w+\s+){{0,2}}(?:did|have)\s+i\s+(?:score|scored|get|got|fail|failed|pass|passed|clear|cleared)\b"
-    rf"|\bam i\s+(?:\w+\s+){{0,2}}(?:detained|debarred|failing|failed)\b", re.I)  # what marks did I get; am I detained
+    rf"|\bam i\s+(?:\w+\s+){{0,2}}(?:detained|debarred|failing|failed)\b"     # what marks did I get; am I detained
+    rf"|\b(?:what|which|how many|total|number of|list|tell me)\s+(?:\w+\s+){{0,3}}?{_DATA}\s+(?:do\s+|did\s+)?i\s+"
+    rf"(?:have|had|got|took|take|failed|passed|cleared|scored|registered|attended|missed)\b", re.I)  # subjects i have
 PERSONAL_ELIG_RE = re.compile(r"\b(?:am i|can i|will i|could i|do i|would i|may i|shall i|should i|i am|i'm)\b[^?.]{0,50}?"
                               r"\b(?:eligible|qualif\w*|sit|appear|write|take|give|attempt|register|allowed|permitted|attend|miss|skip|bunk|pass|clear)\b"
                               r"|\bi (?:failed|passed|have \d+ backlogs?)\b|\bif i pass\b", re.I)
@@ -104,6 +106,7 @@ CODE_RE = re.compile(r"\b[A-Z]{2,4}\s?\d{3}\b")
 def route(question: str) -> Plan:
     q = question
     hit = {k: bool(r.search(q)) for k, r in T.items()}
+    listing = bool(re.search(r"\b(?:which|what|list|how many|number of|total)\b[^?.]{0,30}\b(?:subjects|courses)\b", q, re.I))
     personal = bool(PERSONAL_RE.search(q))
     tools: list[str] = []
     params: list[str] = []
@@ -134,14 +137,16 @@ def route(question: str) -> Plan:
             tools.append("check_placement_eligibility")
         else:
             tools.append("check_exam_eligibility")
-    elif personal and (hit["attendance"] or hit["results"] or hit["profile"]) and not hit["procedure"]:
+    elif personal and (hit["attendance"] or hit["results"] or hit["profile"] or listing) and not hit["procedure"]:
         category = "personal_data"
         if hit["attendance"]:
             tools.append("get_attendance")
         if hit["results"]:
             tools.append("get_results")
-        if hit["profile"]:
+        if hit["profile"] or not tools:          # backlogs / CGPA / subjects, or a general "my record" question
             tools.append("get_student_profile")
+        if listing:
+            tools = ["get_student_profile"]      # a list of my subjects / backlogs, not one course's marks
     elif hit["procedure"]:
         category = "procedure"
     elif any(hit[k] for k in ("attendance", "eligible", "supplementary", "placement", "results", "profile", "fees")):
