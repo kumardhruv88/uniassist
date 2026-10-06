@@ -54,17 +54,18 @@ LLM: **Ollama `llama3.1:8b`** (already pulled on this machine). `[x]` = built, `
 - [x] Extras for the UI: `GET /students`, `GET /audit`, `GET /rules`, `POST /admin/rules/load`
 
 ## Guide §7: evaluation (mandatory)
-- [ ] ≥20 questions with expected answer and source (target 36): ≥3 unanswerable, ≥3 versions/conflicts, ≥4 personal via tools, ≥2 other-student attempts, ≥2 multi-step
-- [ ] Metrics: answer correctness, citation accuracy, abstention accuracy, tool-result correctness, retrieval hit rate, p50/p95 latency, LLM calls and tokens
-- [ ] Method stated; compare two configurations (MiniLM + fixed chunks vs bge-small + clause chunks)
+- [x] ≥20 questions with expected answer and source: 146 in `eval/golden.yaml` (10 unanswerable, 18 versions/conflicts, 15 personal via tools, 5 other-student, 7 multi-step, plus more buckets)
+- [x] Metrics: answer correctness, citation accuracy, abstention accuracy, tool-result correctness, retrieval hit rate, p50/p95 latency, LLM calls and tokens (`eval/run_eval.py`)
+- [x] Method stated; three configurations compared (A: MiniLM + fixed chunks, B: bge-small + clause chunks + hybrid, C: B + reranker) in `eval/REPORT.md`
 
 ## Guide §8: deliverables
-- [x] README: architecture diagram, setup and run steps, curl commands, production features, assumptions, limitations (eval numbers to add from REPORT.md)
+- [x] README: architecture diagram, setup and run steps, curl commands, production features, assumptions, limitations, eval numbers
+  - [x] Rewritten for the panel: team and roles (Manish, Dhruv, Garv: GitHub handle, role, branch, what each built with folders and files), how a question is answered, precedence with the 75/80/65 example, adding a document and what each Annex B field drives, documentation index, final numbers, folder ownership
 - [x] `docker compose up` starts API, seed job and UI (verified: OCR in the container, restart keeps the index); rebuild after today's backend changes
 - [x] Source register CSV + documents
 - [x] Rule registry in SQLite, every rule linked to a cited clause (`rules_seed.csv` + auto-extracted claims)
 - [x] Synthetic data kit: prompts, generator, validation script and output, data card
-- [ ] Evaluation set and report
+- [x] Evaluation set and report (`eval/golden.yaml`, `eval/REPORT.md`)
 - [x] Four sample audit records in `docs/audit_samples/` (calculated, retrieved_fact what-if, refused by guardrail, not_found)
 - [x] AI-usage disclosure (`AI_USAGE.md`: development tools, runtime models, generated data; team review section to fill)
 - [x] Team contribution statement (`CONTRIBUTIONS.md`: Garv = frontend, Manish = LangGraph orchestration, Dhruv = eval + production RAG; rest to fill)
@@ -78,12 +79,14 @@ LLM: **Ollama `llama3.1:8b`** (already pulled on this machine). `[x]` = built, `
   - [x] Pushed `main`, `garv`, `dhruv`, `manish` (34 commits)
   - [x] Force-pushed the rewritten history (no Claude lines); all branches at `b907e94`. GitHub credits kumardhruv88 (17), m4nish-dev (13), garvbahl37-gif (6)
   - [ ] Branch list "Updated" shows the last pusher, not the author: Dhruv and Manish each recreate (or push to) their own branch while signed in as themselves
+  - [x] README commit authored by Dhruv; `garv`, `dhruv`, `manish` fast-forwarded to `main` locally
+  - [ ] Push (team, from their own terminal): `git push origin main garv dhruv manish`
 - [ ] Rotate the GitHub tokens shared during setup
 
 ## Guide §9: judging readiness
 - [ ] Demo: cited policy answer, tool-based eligibility, not_found, conflict resolved
 - [ ] Live test rehearsal: ingest an unseen circular, load test students, unseen questions
-- [x] pytest suite green: 55 tests (precedence T1–T13, arithmetic traps, scope, answer types, live ingestion, refusals, audit, plus 30 production-feature tests)
+- [x] pytest suite green: 72 tests (precedence T1–T13, arithmetic traps, scope, answer types, live ingestion, refusals, audit, plus 47 production-feature tests)
 
 ## Production-grade RAG (extended scope, requested 6 Oct)
 Each item names the technique used. `[x]` built and tested, `[~]` in progress, `[ ]` next.
@@ -147,6 +150,7 @@ Each item names the technique used. `[x]` built and tested, `[~]` in progress, `
 - [x] Fixed the 10 B failures traced in `eval/failure_analysis.yaml`: coverage stop-list (TF6, PR10), eligibility-wording check only for personal questions + fallback quotes the cited clause (PF12), "which students have a CGPA…" bulk pattern (BK4), hidden-instructions / "repeat everything above" injection patterns (ADV7), "give/attempt" as personal verbs (PT13), "not mentioned" drafts → not_found (NA9), applied rule's value always stated (VC2), every table variant listed (TF1), course carried into pronoun follow-ups (FU3b)
 - [x] Re-ran B after the fixes: 99.3% correct (143/144 scored), every bucket 100% except unanswerable 90% (NA9, fixed after the run), citation accuracy 89.8%, p50 3.1 s / p95 5.0 s
 - [x] Final B run on the current code: **100% correct (146/146, every bucket)**, citation accuracy 91.1%, abstention 100%, hallucination 0.0%, groundedness 0.94, p50 2.97 s / p95 4.93 s, 1.38 AI calls and ~1,330 tokens per question (`eval/runs/B/20261006-153726*`); REPORT.md, README and guides refreshed
+- [x] Regression run after the live-use fixes (router, profile lists, strict numbers, evidence titles): still **100% correct (146/146, every bucket)**, citation accuracy 91.0%, abstention 100%, hallucination 0.0%, groundedness 0.95, p50 3.02 s / p95 4.08 s, 1.36 AI calls and ~1,320 tokens per question (`eval/runs/B/20261006-163427*`); `verify_golden.py` 753/753; REPORT.md, README, explainer and presenter's guide (PDFs re-rendered) carry these numbers
 - [x] Presenter's guide explains the upload form: every Annex B field and which precedence check it drives (authority → check 3, dates and scope → check 1, replaces → check 2), with a script and code locations
 - [x] Presenter's guide for the evaluation / security / golden-dataset part: `docs/PRESENTER_GUIDE.md/.pdf` (opening, 12-step live demo, file:line code map, metrics, results, cross-questions)
 
@@ -157,6 +161,8 @@ Each item names the technique used. `[x]` built and tested, `[~]` in progress, `
 - [x] Tesseract 5.5.3 installed locally (Homebrew), so scanned pages are read outside Docker too; the demo corpus' scanned hostel notice is now indexed (4 chunks)
 - [x] Parser: OCR for scanned images on pages that also have printed text; a warning when an image cannot be read; Annex B metadata header tables are not indexed as policy text
 - [x] Verifier: an unsupported negative claim ("you do not need to attend …") is rejected; conflict explanations are written by code, never by the model
+- [x] Re-run on the final code through the API (`run_pack.py`): **15/15 pass** (result file kept local: `eval/adversarial/results/` is gitignored); the runner now skips `JUDGE_TEST_GUIDE.pdf`, which is not a test document
+- [x] Judge guide updated: the pack has been run (13/13 live), and the scanned notice works locally once Tesseract is installed (PDF re-rendered)
 - [ ] Team rehearsal with the same pack before the judges (`JUDGE_TEST_GUIDE.pdf`)
 
 ### Live-use fixes
