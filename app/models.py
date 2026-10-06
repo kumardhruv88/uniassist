@@ -59,6 +59,25 @@ class ConflictRecord(BaseModel):
     resolved_by: ResolvedBy | None      # None = unresolved (conflict_flagged)
 
 
+class AskMeta(BaseModel):
+    """Additive: how this answer was produced. For the UI, the eval harness and operators."""
+    cache_hit: bool = False
+    cache: Literal["miss", "exact", "semantic"] = "miss"
+    latency_ms: int = 0
+    guardrail: str | None = None                 # the input guardrail that blocked the question
+    output_redactions: list[str] = []            # what the output guardrail removed
+    groundedness: float | None = None            # share of answer sentences supported by the sources
+    session_id: str | None = None
+    standalone_question: str | None = None       # set when a follow-up was rewritten
+    rewrite: str | None = None                   # clarification | course_swap | llm | concat
+    degraded: bool = False                       # the LLM was unavailable and a deterministic template answered
+    planner: str | None = None                   # llm | router | router_first | router_fallback
+    retrieval: str | None = None                 # dense | hybrid, + rerank
+    llm_calls: int = 0
+    tokens: int = 0
+    tokens_saved: int = 0                        # evidence tokens removed by context optimisation
+
+
 class AskResponse(BaseModel):
     trace_id: str
     answer: str
@@ -72,6 +91,7 @@ class AskResponse(BaseModel):
     upcoming_changes: list[SourceRef] = []      # additive
     clarification_options: list[str] = []      # additive
     student_id: str | None = None              # additive
+    meta: AskMeta = Field(default_factory=AskMeta)   # additive
 
 
 # ----------------------------------------------------------------------------- /ingest

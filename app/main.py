@@ -5,6 +5,7 @@ import csv
 import io
 import json
 import logging
+import threading
 from contextlib import asynccontextmanager
 from datetime import date
 from pathlib import Path
@@ -12,14 +13,18 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import PlainTextResponse
 from pydantic import ValidationError
 
-from app import audit
-from app.db import init_db, one, rows, session
+from app import audit, cache, errors, metrics
+from app.conversation import sessions
+from app.db import bump_data_version, data_version, init_db, one, rows, session
 from app.graph.pipeline import ask as run_ask
 from app.ingestion.pipeline import ingest as run_ingest
 from app.loader import load as run_load
 from app.models import AskRequest, AskResponse, IngestMetadata, IngestResponse, LoadRequest, LoadResponse, RuleIn
+from app.security import events
+from app.security.ratelimit import RateLimiter
 from app.services import get_services
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -38,20 +43,40 @@ def _self_check() -> None:
             run_ingest(Path(d["file_path"]).read_bytes(), d["file_path"], meta, svc)
 
 
+limiter: RateLimiter | None = None
+
+
+def data_changed() -> None:
+    """Every write that can change an answer (ingest, rules, students) bumps the data version, so answers cached
+    under the old version are never served again. The in-memory answer caches are cleared to free the memory."""
+    with session() as con:
+        bump_data_version(con)
+    cache.answers.clear()
+    cache.semantic.clear()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global limiter
     init_db()
     svc = get_services()
+    s = svc.settings
+    limiter = RateLimiter(per_minute=s.rate_limit_per_min, burst=s.rate_limit_burst, block_after=s.abuse_block_after,
+                          window_s=600, block_s=s.abuse_block_s)
     await run_in_threadpool(lambda: svc.embedder)        # warm the embedding model once
     await run_in_threadpool(_self_check)
-    log.info("ready: llm=%s/%s embed=%s collection=%s", svc.settings.llm_provider, svc.settings.llm_model,
-             svc.settings.embed_model, svc.settings.collection_name)
+    if s.llm_provider != "mock":                         # load the LLM into memory without delaying startup
+        threading.Thread(target=svc.llm.warmup, daemon=True, name="llm-warmup").start()
+    log.info("ready: llm=%s/%s embed=%s collection=%s retrieval=%s reranker=%s planner=%s", s.llm_provider, s.llm_model,
+             s.embed_model, s.collection_name, s.retrieval_mode, s.reranker, s.planner)
     yield
 
 
-app = FastAPI(title="UniAssist API", version="1.0.0", lifespan=lifespan,
+app = FastAPI(title="UniAssist API", version="1.1.0", lifespan=lifespan,
               description="AI-Powered University Student Services Assistant — HCLTech Future Ready AI Engineer Hackathon")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
+                   expose_headers=["Retry-After"])
+errors.install(app)
 
 
 def admin(x_admin_token: str | None = Header(default=None)) -> None:
@@ -62,8 +87,30 @@ def admin(x_admin_token: str | None = Header(default=None)) -> None:
 
 # ----------------------------------------------------------------------------- contract
 @app.post("/ask", response_model=AskResponse)
-async def ask(req: AskRequest, x_student_id: str | None = Header(default=None)) -> AskResponse:
-    return await run_in_threadpool(run_ask, get_services(), req.question, x_student_id, req.as_of_date)
+async def ask(req: AskRequest, request: Request, x_student_id: str | None = Header(default=None),
+              x_session_id: str | None = Header(default=None)) -> AskResponse:
+    svc = get_services()
+    s = svc.settings
+    client = request.client.host if request.client else "unknown"
+    if s.rate_limit_enabled and limiter:
+        allowed, code, retry_after = limiter.check(client)
+        if not allowed:
+            metrics.inc("rate_limited", code=code)
+            if code == "RATE_LIMITED":
+                events.record("rate_limited", client, {"retry_after_s": round(retry_after, 1)}, x_student_id)
+            raise errors.AppError(code, "Too many requests from this client. Wait and try again." if code == "RATE_LIMITED"
+                                  else "This client is temporarily blocked after repeated blocked requests.", 429,
+                                  retry_after=retry_after)
+    session_id = (x_session_id or "").strip()[:64] or None
+    resp = await run_in_threadpool(run_ask, svc, req.question, x_student_id, req.as_of_date, session_id)
+    if resp.meta.guardrail:
+        events.record("guardrail_block", client, {"reason": resp.meta.guardrail}, resp.student_id, resp.trace_id)
+        if s.rate_limit_enabled and limiter and limiter.strike(client):
+            events.record("client_blocked", client, {"after": s.abuse_block_after, "for_s": s.abuse_block_s},
+                          resp.student_id, resp.trace_id)
+    if resp.meta.output_redactions:
+        events.record("output_redaction", client, {"removed": resp.meta.output_redactions}, resp.student_id, resp.trace_id)
+    return resp
 
 
 @app.post("/ingest", response_model=IngestResponse, status_code=201, dependencies=[Depends(admin)])
@@ -85,7 +132,10 @@ async def ingest(request: Request, file: UploadFile = File(...), metadata: str |
     svc = get_services()
     if len(data) > svc.settings.max_upload_mb * 1024 * 1024:
         raise HTTPException(413, f"file is larger than {svc.settings.max_upload_mb} MB")
-    return await run_in_threadpool(run_ingest, data, file.filename or "upload.txt", meta, svc)
+    res = await run_in_threadpool(run_ingest, data, file.filename or "upload.txt", meta, svc)
+    if res.status in ("indexed", "replaced"):
+        data_changed()
+    return res
 
 
 @app.get("/health")
@@ -105,9 +155,16 @@ async def health() -> dict:
     comp["llm"] = await run_in_threadpool(svc.llm.health)
     down = [k for k in ("vector_store", "sqlite") if comp[k]["status"] != "ok"]
     status = "down" if down else ("ok" if comp["llm"]["status"] == "ok" else "degraded")
+    s = svc.settings
     return {"status": status, "components": comp,
-            "config": {"embedder": svc.settings.embed_model, "top_k": svc.settings.top_k, "tau": svc.settings.tau,
-                       "llm_provider": svc.settings.llm_provider, "llm_model": svc.settings.llm_model}}
+            "config": {"embedder": s.embed_model, "top_k": s.top_k, "tau": s.tau, "llm_provider": s.llm_provider,
+                       "llm_model": s.llm_model, "llm_fallback_model": s.llm_fallback_model, "cloud_fallback": s.cloud_fallback,
+                       "retrieval_mode": s.retrieval_mode, "reranker": s.reranker, "planner": s.planner,
+                       "context_budget_tokens": s.context_budget_tokens},
+            "caches": {"answers": len(cache.answers), "llm": len(cache.llm), "data_version": data_version(),
+                       "enabled": {"answers": s.answer_cache, "semantic": s.semantic_cache, "llm": s.llm_cache}},
+            "security": {"rate_limit_per_min": s.rate_limit_per_min if s.rate_limit_enabled else None,
+                         "abuse_block_after": s.abuse_block_after, "input_guardrails": True, "output_guardrails": True}}
 
 
 @app.get("/audit/{trace_id}")
@@ -145,7 +202,10 @@ async def load_students(request: Request) -> LoadResponse:
             payload = LoadRequest.model_validate(await request.json()).model_dump()
         except (ValidationError, json.JSONDecodeError) as e:
             raise HTTPException(400, f"send JSON {{students, courses, attendance, results}} or CSV files: {e}")
-    return await run_in_threadpool(run_load, payload)
+    res = await run_in_threadpool(run_load, payload)
+    if any(res.accepted.values()):
+        data_changed()
+    return res
 
 
 # ----------------------------------------------------------------------------- additive (UI + seeding)
@@ -199,9 +259,23 @@ async def load_rules(request: Request) -> dict:
                 added.append(r.rule_id)
             except (ValidationError, ValueError) as e:
                 rejected.append({"row": i, "reason": str(e)[:300]})
+    if added:
+        data_changed()
     return {"added": added, "rejected": rejected}
+
+
+@app.get("/metrics", response_class=PlainTextResponse)
+async def prometheus_metrics() -> str:
+    """Prometheus text format: requests by answer type and cache, node and LLM latency histograms, LLM calls, tokens,
+    errors and fallbacks per provider, cache hits and misses, guardrail blocks, rate limiting, degraded answers."""
+    return metrics.render()
+
+
+@app.get("/security/events", dependencies=[Depends(admin)])
+async def security_events(limit: int = 50) -> dict:
+    return {"events": events.recent(max(1, min(limit, 500)))}
 
 
 @app.get("/")
 async def root() -> dict:
-    return {"name": "UniAssist API", "docs": "/docs", "health": "/health"}
+    return {"name": "UniAssist API", "docs": "/docs", "health": "/health", "metrics": "/metrics"}
