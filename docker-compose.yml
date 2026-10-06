@@ -1,0 +1,128 @@
+# UniAssist on Docker. `docker compose up` builds and starts the API, a one-shot seed job and the web UI.
+#
+#   docker compose up --build -d         UI http://localhost:8080   API http://localhost:8000/docs
+#   docker compose logs -f seed          documents indexed, rules and students loaded
+#   docker compose down                  stop everything; the data stays in DATA_DIR
+#
+# Stores: ChromaDB (embedded, persisted) and SQLite run inside the api container and write to DATA_DIR
+# (default ./data/runtime). Restarts re-ingest nothing: the index stays on disk, and the seed job skips
+# documents whose file and metadata hashes are unchanged.
+#
+# Ollama (the LLM) runs on the host machine. Pull the model once: ollama pull llama3.1:8b
+#   macOS, Windows (Docker Desktop): nothing else to do. The API reaches the host at host.docker.internal:11434.
+#   Linux: Ollama listens on 127.0.0.1 by default, which containers cannot reach. Make it listen on all interfaces:
+#     sudo systemctl edit ollama   add   [Service]  Environment="OLLAMA_HOST=0.0.0.0:11434"
+#     sudo systemctl restart ollama          (or run: OLLAMA_HOST=0.0.0.0:11434 ollama serve)
+#   extra_hosts below maps host.docker.internal to the host on Linux too.
+#   Ollama on another machine:   OLLAMA_BASE_URL=http://<ip>:11434 docker compose up -d
+#   No Ollama on the host: run it in a container (CPU only unless you enable the GPU block below):
+#     OLLAMA_BASE_URL=http://ollama:11434 docker compose --profile ollama up -d
+# Check: curl -s localhost:8000/health   ->  "components.llm.status" is "ok" once the API reaches Ollama.
+#
+# Optional settings, from the shell or a .env file next to this file:
+#   API_PORT (8000), UI_PORT (8080), DATA_DIR (./data/runtime), LLM_MODEL (llama3.1:8b), OLLAMA_BASE_URL,
+#   ADMIN_TOKEN and the app settings listed under api.environment (unset = the defaults in app/config.py).
+#   EMBED_MODEL and RERANKER are baked into the image at build time: after changing them, rebuild (make up).
+# Never point DATA_DIR at a folder that an API running outside Docker is using at the same time.
+
+name: uniassist
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+      args:                         # models are baked into the image (the container runs offline);
+        EMBED_MODEL: ${EMBED_MODEL:-BAAI/bge-small-en-v1.5}   # change them, then rebuild
+        RERANKER: ${RERANKER:-none}                          # e.g. cross-encoder/ms-marco-MiniLM-L-6-v2
+    image: uniassist-api:latest
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - ${DATA_DIR:-./data/runtime}:/app/data/runtime
+    environment:
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      LLM_MODEL: ${LLM_MODEL:-llama3.1:8b}
+      # Passed through only when set (shell or .env); otherwise app/config.py decides.
+      # Any other setting in app/config.py can be added the same way (NAME in upper case).
+      LLM_PROVIDER:
+      LLM_FALLBACK_MODEL:
+      CLOUD_FALLBACK:
+      CLOUD_BASE_URL:
+      CLOUD_API_KEY:
+      CLOUD_MODEL:
+      RETRIEVAL_MODE:
+      RATE_LIMIT_ENABLED:
+      ADMIN_TOKEN:
+      TAU:
+      TOP_K:
+      TIMEZONE:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json, sys, urllib.request; h = json.load(urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=8)); sys.exit(h['status'] == 'down')"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+
+  # One-shot: ingests data/corpus/documents through POST /ingest, then loads the curated rules and the
+  # synthetic students. Idempotent, so it is safe on every `up`; it exits when done.
+  seed:
+    image: uniassist-api:latest
+    pull_policy: never              # built by the api service
+    command: ["python", "scripts/seed.py", "--api", "http://api:8000"]
+    environment:
+      ADMIN_TOKEN:
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      disable: true
+    restart: "no"
+
+  # React UI served by nginx; /api/* is proxied to the api service (frontend/Dockerfile, frontend/nginx.conf).
+  ui:
+    build:
+      context: ./frontend
+    image: uniassist-ui:latest
+    ports:
+      - "${UI_PORT:-8080}:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # Optional: Ollama in a container, for hosts without a native install. Start with
+  #   OLLAMA_BASE_URL=http://ollama:11434 docker compose --profile ollama up -d
+  # The first start downloads LLM_MODEL (about 5 GB for llama3.1:8b) into the ollama-models volume.
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ollama"]
+    volumes:
+      - ollama-models:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    restart: unless-stopped
+    # NVIDIA GPU (Linux with nvidia-container-toolkit): uncomment.
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices: [{ driver: nvidia, count: all, capabilities: [gpu] }]
+
+  ollama-pull:
+    image: ollama/ollama:latest
+    profiles: ["ollama"]
+    command: ["pull", "${LLM_MODEL:-llama3.1:8b}"]
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
+volumes:
+  ollama-models:

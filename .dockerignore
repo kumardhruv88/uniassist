@@ -1,0 +1,21 @@
+# Build context of docker/api.Dockerfile (the repository root).
+# The UI image builds from ./frontend and uses frontend/.dockerignore instead.
+.git
+.venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# runtime state (SQLite, Chroma, uploads) is mounted at run time, never baked in
+data/runtime*
+
+eval/runs
+frontend/node_modules
+frontend/dist
+frontend/screenshots
+docs/**/*.pdf
+docs/**/*.png
