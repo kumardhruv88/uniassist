@@ -151,7 +151,16 @@ Every feature can be switched in `.env` (see `.env.example`) and is visible in t
 
 ## Evaluation
 
-The golden set is `eval/golden.yaml` (72 items, covering every bucket in guide §7 plus adversarial, follow-up and cache items). The harness is black-box: it goes only through `/ask` and `/audit`. The full method, the A/B/C configuration comparison and per-item results are in [`eval/REPORT.md`](eval/REPORT.md).
+The golden set is `eval/golden.yaml`: 146 items covering every bucket in guide section 7, plus adversarial, follow-up and cache items. Every expected value is verified against the documents and records by `eval/verify_golden.py`. The harness is black-box: it goes only through `/ask` and `/audit`. The full method, the A/B/C comparison and per-item results are in [`eval/REPORT.md`](eval/REPORT.md).
+
+| Configuration | Correct | Citation accuracy | Hallucination | p50 / p95 |
+|---|---|---|---|---|
+| A: MiniLM + fixed 800-character chunks, dense only (same code as B and C below) | 77.8% | 1.4% | 2.1% | 3.3 / 6.0 s |
+| B: shipped (bge-small + clause chunks, hybrid + glossary) | 93.1% | 89.3% | 0.7% | 3.3 / 6.1 s |
+| C: B + cross-encoder reranker | 93.8% | 91.5% | 0.7% | 3.2 / 5.4 s |
+| **B on the final code, after fixing every traced failure** | **100% (146/146)** | **91.1%** | **0.0%** | **3.0 / 4.9 s** |
+
+The adversarial test pack (13 synthetic documents, `eval/adversarial/`) passes 13 of 13 checks live through the UI.
 
 ```bash
 uv run python eval/run_config.py A    # baseline: MiniLM + fixed 800-character chunks, dense only (τ calibrated)

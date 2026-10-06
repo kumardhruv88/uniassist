@@ -146,7 +146,8 @@ Each item names the technique used. `[x]` built and tested, `[~]` in progress, `
 - [x] LLM-as-judge calibrated: 90.3% agreement with exact match on B (κ 0.37); blind spot documented (rates a wrong "not found" as correct), so exact match stays primary
 - [x] Fixed the 10 B failures traced in `eval/failure_analysis.yaml`: coverage stop-list (TF6, PR10), eligibility-wording check only for personal questions + fallback quotes the cited clause (PF12), "which students have a CGPA…" bulk pattern (BK4), hidden-instructions / "repeat everything above" injection patterns (ADV7), "give/attempt" as personal verbs (PT13), "not mentioned" drafts → not_found (NA9), applied rule's value always stated (VC2), every table variant listed (TF1), course carried into pronoun follow-ups (FU3b)
 - [x] Re-ran B after the fixes: 99.3% correct (143/144 scored), every bucket 100% except unanswerable 90% (NA9, fixed after the run), citation accuracy 89.8%, p50 3.1 s / p95 5.0 s
-- [ ] Final A/B/C re-run on the current code, then refresh REPORT.md, README and diagrams (run when nobody is using the shared Ollama)
+- [x] Final B run on the current code: **100% correct (146/146, every bucket)**, citation accuracy 91.1%, abstention 100%, hallucination 0.0%, groundedness 0.94, p50 2.97 s / p95 4.93 s, 1.38 AI calls and ~1,330 tokens per question (`eval/runs/B/20261006-153726*`); REPORT.md, README and guides refreshed
+- [x] Presenter's guide for the evaluation / security / golden-dataset part: `docs/PRESENTER_GUIDE.md/.pdf` (opening, 12-step live demo, file:line code map, metrics, results, cross-questions)
 
 ### Aster University test pack (judge rehearsal)
 - [x] 13 synthetic documents built from the test manifest (`eval/adversarial/pack/`, `make_pack.py`): baseline, supersession, exact duplicate, false FAQ, unofficial post, future-dated rule, out-of-scope B.Arch, visible + hidden injection, tied fee circulars, scanned OCR notice, irrelevant library hours, keyword-stuffed post
