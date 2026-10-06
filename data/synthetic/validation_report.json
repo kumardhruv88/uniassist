@@ -1,0 +1,167 @@
+{
+  "directory": "/Users/garvbahl/Documents/Projects/HCL_TECH/data/synthetic/out",
+  "pass_mark_pct": 40.0,
+  "min_attendance_pct": 75.0,
+  "row_counts": {
+    "students": 40,
+    "courses": 12,
+    "attendance": 220,
+    "results": 141
+  },
+  "distributions": {
+    "students_per_programme_batch": {
+      "B.Tech CSE 2025": 10,
+      "B.Tech CSE 2024": 10,
+      "B.Tech ECE 2025": 10,
+      "B.Tech ECE 2024": 10
+    },
+    "attendance_buckets_pct": {
+      "65-74.99": 35,
+      "75-79.99": 38,
+      "80-89.99": 53,
+      "90+": 84,
+      "<65": 10
+    },
+    "results": {
+      "PASS": 132,
+      "FAIL": 6,
+      "ABSENT": 1,
+      "DETAINED": 2
+    },
+    "cgpa_min_max": [
+      6.49,
+      9.1
+    ]
+  },
+  "checks": [
+    {
+      "id": "V01",
+      "check": "Columns and types match Annex C",
+      "severity": "error",
+      "passed": true,
+      "violations": [],
+      "violation_count": 0
+    },
+    {
+      "id": "V02",
+      "check": "student_id is S + 4 digits and outside S9000-S9999",
+      "severity": "error",
+      "passed": true,
+      "violations": [],
+      "violation_count": 0
+    },
+    {
+      "id": "V03",
+      "check": "No course code starts with JDG (reserved for judges)",
+      "severity": "error",
+      "passed": true,
+      "violations": [],
+      "violation_count": 0
+    },
+    {
+      "id": "V04",
+      "check": "Value ranges (semester, CGPA, backlogs, attendance, marks)",
+      "severity": "error",
+      "passed": true,
+      "violations": [],
+      "violation_count": 0
+    },
+    {
+      "id": "V05",
+      "check": "total_marks = internal_marks + external_marks",
+      "severity": "error",
+      "passed": true,
+      "violations": [],
+      "violation_count": 0
+    },
+    {
+      "id": "V06",
+      "check": "Attendance and results reference existing students and courses",
+      "severity": "error",
+      "passed": true,
+      "violations": [],
+      "violation_count": 0
+    },
+    {
+      "id": "V07",
+      "check": "Course programmes match student programmes",
+      "severity": "error",
+      "passed": true,
+      "violations": [],
+      "violation_count": 0
+    },
+    {
+      "id": "V08",
+      "check": "Course semester <= student's current semester",
+      "severity": "warning",
+      "passed": true,
+      "violations": [],
+      "violation_count": 0
+    },
+    {
+      "id": "V09",
+      "check": "Result consistent with the pass mark (40% from rule_registry)",
+      "severity": "error",
+      "passed": true,
+      "violations": [],
+      "violation_count": 0
+    },
+    {
+      "id": "V10",
+      "check": "ABSENT results have no external marks",
+      "severity": "error",
+      "passed": true,
+      "violations": [],
+      "violation_count": 0
+    },
+    {
+      "id": "V11",
+      "check": "DETAINED only when attendance is below 75% (rule_registry)",
+      "severity": "error",
+      "passed": true,
+      "violations": [],
+      "violation_count": 0
+    },
+    {
+      "id": "V12",
+      "check": "active_backlogs equals courses whose latest attempt is not PASS",
+      "severity": "error",
+      "passed": true,
+      "violations": [],
+      "violation_count": 0
+    },
+    {
+      "id": "V13",
+      "check": "Supplementary attempts follow a non-PASS regular attempt",
+      "severity": "error",
+      "passed": true,
+      "violations": [],
+      "violation_count": 0
+    },
+    {
+      "id": "V14",
+      "check": "Coverage: >= 30 students, 2 programmes, 2 batches, 6 courses",
+      "severity": "error",
+      "passed": true,
+      "violations": [],
+      "violation_count": 0
+    },
+    {
+      "id": "V15",
+      "check": "Every edge case in the manifest holds",
+      "severity": "error",
+      "passed": true,
+      "violations": [],
+      "violation_count": 0
+    },
+    {
+      "id": "V16",
+      "check": "Distribution report",
+      "severity": "info",
+      "passed": true,
+      "violations": [],
+      "violation_count": 0
+    }
+  ],
+  "errors": 0
+}

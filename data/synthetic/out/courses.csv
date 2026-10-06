@@ -1,0 +1,13 @@
+course_code,course_name,programme,semester,credits
+CS101,Programming Fundamentals,B.Tech CSE,1,4
+MA101,Engineering Mathematics I,B.Tech CSE,1,4
+CS201,Data Structures,B.Tech CSE,3,4
+CS202,Database Systems,B.Tech CSE,3,3
+MA201,Mathematics III,B.Tech CSE,3,4
+CS301,Operating Systems,B.Tech CSE,5,4
+EC101,Basic Electronics,B.Tech ECE,1,4
+MA102,Engineering Mathematics I (ECE),B.Tech ECE,1,4
+EC201,Signals and Systems,B.Tech ECE,3,4
+EC202,Digital Electronics,B.Tech ECE,3,3
+MA202,Mathematics III (ECE),B.Tech ECE,3,4
+EC301,Communication Systems,B.Tech ECE,5,4

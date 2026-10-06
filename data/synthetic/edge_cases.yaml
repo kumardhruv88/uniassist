@@ -1,0 +1,74 @@
+# Edge cases pinned to student IDs (guide §4.2). Code overlays these exact values after generation;
+# validate.py asserts each one. attendance: {course: [attended, held]}; others_pass: every other result is PASS.
+- id: S1001
+  case: Attendance exactly at the regulation threshold (30/40 = 75.00%)
+  attendance: {CS201: [30, 40]}
+  expect: {attendance_pct: {CS201: 75}}
+- id: S1002
+  case: One class below the circular's 80% (31/40 = 77.50%); eligible under the 75% regulation
+  attendance: {CS201: [31, 40]}
+  expect: {attendance_pct: {CS201: 77.5}}
+- id: S1003
+  case: One class below the 75% threshold (29/40 = 72.50%)
+  attendance: {CS201: [29, 40]}
+  expect: {attendance_pct: {CS201: 72.5}}
+- id: S1004
+  case: Failed with aggregate one mark below the 40% pass mark (39/100)
+  results: [{course_code: MA101, internal_marks: 15, external_marks: 24, result: FAIL}]
+  others_pass: true
+  expect: {result: {MA101: FAIL}, total: {MA101: 39}, active_backlogs: 1}
+- id: S1005
+  case: Absent in the end-semester examination
+  results: [{course_code: CS101, internal_marks: 22, external_marks: null, result: ABSENT}]
+  others_pass: true
+  expect: {result: {CS101: ABSENT}, active_backlogs: 1}
+- id: S1006
+  case: Detained for low attendance (26/44 = 59.09%)
+  attendance: {CS101: [26, 44]}
+  results: [{course_code: CS101, internal_marks: 12, external_marks: null, result: DETAINED}]
+  others_pass: true
+  expect: {result: {CS101: DETAINED}, active_backlogs: 1}
+- id: S1007
+  case: Rounding trap (47/59 = 79.66%; must never display as 80%)
+  attendance: {CS202: [47, 59]}
+  expect: {attendance_pct: {CS202: 79.66}}
+- id: S1008
+  case: Failed, then passed the supplementary examination (no active backlog)
+  results: [{course_code: MA101, internal_marks: 16, external_marks: 20, result: FAIL},
+            {course_code: MA101, exam_type: SUPPLEMENTARY, internal_marks: 16, external_marks: 31, result: PASS}]
+  others_pass: true
+  expect: {result: {MA101: PASS}, active_backlogs: 0}
+- id: S1011
+  case: Multiple backlogs (3)
+  results: [{course_code: CS201, internal_marks: 14, external_marks: 18, result: FAIL},
+            {course_code: CS202, internal_marks: 12, external_marks: 20, result: FAIL},
+            {course_code: MA201, internal_marks: 15, external_marks: 19, result: FAIL}]
+  others_pass: true
+  cgpa: 6.9
+  expect: {active_backlogs: 3}
+- id: S1012
+  case: One backlog (CS201) with CGPA 7.20, for the placement what-if
+  results: [{course_code: CS201, internal_marks: 16, external_marks: 21, result: FAIL}]
+  others_pass: true
+  cgpa: 7.2
+  expect: {active_backlogs: 1, cgpa: 7.2}
+- id: S1013
+  case: CGPA exactly at the placement cut-off (6.50), no backlogs
+  others_pass: true
+  cgpa: 6.5
+  expect: {active_backlogs: 0, cgpa: 6.5}
+- id: S1014
+  case: CGPA 0.01 below the placement cut-off (6.49), no backlogs
+  others_pass: true
+  cgpa: 6.49
+  expect: {active_backlogs: 0, cgpa: 6.49}
+- id: S1021
+  case: ECE attendance exactly at 75% (30/40)
+  attendance: {EC201: [30, 40]}
+  expect: {attendance_pct: {EC201: 75}}
+- id: S1031
+  case: ECE student detained in a past course (25/40 = 62.50%)
+  attendance: {EC201: [25, 40]}
+  results: [{course_code: EC201, internal_marks: 11, external_marks: null, result: DETAINED}]
+  others_pass: true
+  expect: {result: {EC201: DETAINED}, active_backlogs: 1}

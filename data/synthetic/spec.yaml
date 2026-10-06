@@ -1,0 +1,29 @@
+# Synthetic student data spec (guide §4.2). Courses and IDs are fixed by code; the LLM writes names and marks.
+model: llama3.1:8b
+temperature: 0.7
+seed: 42
+batch_size: 5
+marks: {internal_max: 40, external_max: 60, max_marks: 100}
+programmes:
+  B.Tech CSE:
+    - {course_code: CS101, course_name: Programming Fundamentals, semester: 1, credits: 4, classes_held: 44}
+    - {course_code: MA101, course_name: Engineering Mathematics I, semester: 1, credits: 4, classes_held: 44}
+    - {course_code: CS201, course_name: Data Structures, semester: 3, credits: 4, classes_held: 40}
+    - {course_code: CS202, course_name: Database Systems, semester: 3, credits: 3, classes_held: 59}
+    - {course_code: MA201, course_name: Mathematics III, semester: 3, credits: 4, classes_held: 40}
+    - {course_code: CS301, course_name: Operating Systems, semester: 5, credits: 4, classes_held: 42}
+  B.Tech ECE:
+    - {course_code: EC101, course_name: Basic Electronics, semester: 1, credits: 4, classes_held: 44}
+    - {course_code: MA102, course_name: Engineering Mathematics I (ECE), semester: 1, credits: 4, classes_held: 44}
+    - {course_code: EC201, course_name: Signals and Systems, semester: 3, credits: 4, classes_held: 40}
+    - {course_code: EC202, course_name: Digital Electronics, semester: 3, credits: 3, classes_held: 40}
+    - {course_code: MA202, course_name: Mathematics III (ECE), semester: 3, credits: 4, classes_held: 40}
+    - {course_code: EC301, course_name: Communication Systems, semester: 5, credits: 4, classes_held: 42}
+batches:
+  2025: {current_semester: 3, exam_sessions: {1: 2025-NOV}, supplementary_session: 2026-JAN}
+  2024: {current_semester: 5, exam_sessions: {1: 2024-NOV, 3: 2025-NOV}, supplementary_session: 2026-JAN}
+groups:
+  - {programme: B.Tech CSE, batch_year: 2025, first_id: 1001, count: 10}
+  - {programme: B.Tech CSE, batch_year: 2024, first_id: 1011, count: 10}
+  - {programme: B.Tech ECE, batch_year: 2025, first_id: 1021, count: 10}
+  - {programme: B.Tech ECE, batch_year: 2024, first_id: 1031, count: 10}
