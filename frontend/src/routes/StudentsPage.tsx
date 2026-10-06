@@ -252,6 +252,12 @@ export default function StudentsPage() {
         Load test students from the Annex C CSV files, then ask questions as any of them. Each row is checked on its
         own, so a bad row is reported without blocking the rest.
       </p>
+      {students.data?.length ? (
+        <p className="mt-3 max-w-[62ch] font-semibold text-ink">
+          {plural(students.data.length, 'student')} already loaded (listed below), so there is nothing to upload for the
+          demo. Use this form only to add or update students, for example a judge&rsquo;s own test files.
+        </p>
+      ) : null}
 
       <section className="mt-10" aria-labelledby={loadId}>
         <h2 id={loadId} className="section-title">
