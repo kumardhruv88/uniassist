@@ -91,10 +91,17 @@ CMP = re.compile(r"(\d+(?:\.\d+)?)\s*%[^.;]{0,60}?\b(below|less than|under|lower
                  r"exceeds|exceeding|over|higher than|meets|meeting|at least|equal to)\b[^.;\d]{0,40}?(\d+(?:\.\d+)?)\s*%", re.I)
 
 
+NEW_CLAUSE = re.compile(r"\b(?:so|therefore|thus|hence|because|since|and|but|while|whereas|must|should|need|needs|"
+                        r"has to|have to|required to|means)\b", re.I)
+
+
 def false_comparisons(text: str) -> list[str]:
-    """Catch arithmetic the model got wrong, e.g. '79.66%, which is below the required 75%'."""
+    """Catch arithmetic the model got wrong, e.g. '79.66%, which is below the required 75%'.
+    A new clause between the two values ('up to 10%, so attendance must be at least 70%') is not a comparison."""
     bad = []
     for m in CMP.finditer(text):
+        if NEW_CLAUSE.search(text[m.end(1):m.start(2)]):
+            continue
         a, word, b = Decimal(m.group(1)), m.group(2).lower(), Decimal(m.group(3))
         below = word in ("below", "less than", "under", "lower than", "short of")
         above = word in ("above", "more than", "exceeds", "exceeding", "over", "higher than")
@@ -118,3 +125,27 @@ def evidence_coverage(question: str, evidence) -> float:
     pre = {w[:4] for w in words if len(w) >= 4}
     hit = {t for t in terms if t in words or (len(t) >= 4 and t[:4] in pre)}
     return len(hit) / len(terms)
+
+
+SENT_SPLIT = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9(\"'])")
+
+
+def groundedness(text: str, sources: list[str]) -> tuple[float, list[str]]:
+    """Share of the draft's sentences supported by the sources (verdict, records, rules, evidence titles and text).
+
+    A sentence is supported when at least half of its content terms occur in one source sentence, or three quarters
+    occur across all sources. Terms are stemmed, so paraphrase with the same vocabulary still counts; a sentence
+    built from words the sources never use does not. Returns (score, unsupported sentences)."""
+    from app.retrieval.query import terms
+    sents = [x for x in SENT_SPLIT.split(strip_markers(text)) if len(set(terms(x))) >= 3]
+    if not sents:
+        return 1.0, []
+    src_sents = [set(terms(x)) for src in sources for x in SENT_SPLIT.split(src or "") if x.strip()]
+    pool = set().union(*src_sents) if src_sents else set()
+    unsupported = []
+    for snt in sents:
+        st = set(terms(snt))
+        best = max((len(st & ss) / len(st) for ss in src_sents), default=0.0)
+        if best < 0.5 and len(st & pool) / len(st) < 0.75:
+            unsupported.append(snt)
+    return round(1 - len(unsupported) / len(sents), 3), unsupported

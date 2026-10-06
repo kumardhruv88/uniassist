@@ -89,6 +89,9 @@ def _name(c: dict) -> str:
     return f"{c['course_name']} ({c['course_code']})"
 
 
+def _classes(n: int) -> str:
+    return "class" if n == 1 else f"{n} classes"
+
 
 # ----------------------------------------------------------------------------- course resolution (used by authorize)
 def student_courses(ctx: ToolContext) -> list[dict]:
@@ -210,7 +213,7 @@ def check_exam_eligibility(ctx: ToolContext, course_code: str) -> ToolResult:
                    f"which meets the required {float(t):g}%.")
     else:
         verdict = (f"You are not eligible to sit the {_name(c)} end-semester exam: your attendance is {fmt_pct(p)}%, "
-                   f"below the required {float(t):g}%. Attending the next {need} classes would bring you to "
+                   f"below the required {float(t):g}%. Attending the next {_classes(need)} would bring you to "
                    f"{a['classes_attended'] + need} of {a['classes_held'] + need}.")
     return ToolResult("check_exam_eligibility", inp, out, decisive=True, verdict=verdict, rules=[rr])
 
@@ -290,12 +293,50 @@ def attendance_projection(ctx: ToolContext, course_code: str, future_classes: in
            "classes_held": a["classes_held"], "classes_attended": a["classes_attended"], "classes_needed": need,
            "attendance_pct": float(floor_2dp(pct(a["classes_attended"], a["classes_held"])))}
     if need:
-        verdict = (f"You need to attend the next {need} classes in {_name(c)} without a break to reach the required "
+        verdict = (f"You need to attend the next {_classes(need)} in {_name(c)} without a break to reach the required "
                    f"{float(t):g}% ({a['classes_attended'] + need} of {a['classes_held'] + need}).")
     else:
         verdict = (f"Of the next {future_classes} classes in {_name(c)}, you can miss at most {m} and still meet the "
                    f"required {float(t):g}% (you have attended {a['classes_attended']} of {a['classes_held']} so far).")
     return ToolResult("attendance_projection", inp, out, decisive=True, verdict=verdict, rules=[rr])
+
+
+def _num(x: Fraction) -> str:
+    return str(x.numerator) if x.denominator == 1 else f"{floor_2dp(x).normalize():f}"
+
+
+def check_attendance_value(ctx: ToolContext, value_pct: str, medical: bool = False) -> ToolResult:
+    """Policy what-if, no personal data: is a stated attendance percentage enough to sit end-semester exams?
+    Both thresholds come from the rule registry (minimum attendance, and the shortage that can be condoned)."""
+    inp = {"attendance_pct": value_pct, "medical_certificate": medical}
+    v = as_fraction(value_pct)
+    rr, rule, problem = _threshold(ctx, "min_attendance_pct")
+    if problem:
+        return ToolResult("check_attendance_value", inp, {"result": problem}, rules=[rr])
+    t = as_fraction(rule["value"])
+    out = {"minimum_pct": float(t), "rule_id": rule["rule_id"]}
+    if v >= t:
+        return ToolResult("check_attendance_value", inp, {**out, "result": "MEETS_MINIMUM"}, decisive=True, rules=[rr],
+                          verdict=f"Yes: {_num(v)}% attendance meets the {_num(t)}% minimum required to sit the end-semester exam.")
+    crr, crule, cproblem = _threshold(ctx, "max_condonation_pct")
+    if cproblem:
+        return ToolResult("check_attendance_value", inp, {**out, "result": "BELOW_MINIMUM"}, decisive=True, rules=[rr, crr],
+                          verdict=f"No: {_num(v)}% attendance is below the {_num(t)}% minimum required to sit the end-semester exam.")
+    c = as_fraction(crule["value"])
+    floor = t - c
+    out.update(condonable_pct=float(c), lowest_with_condonation_pct=float(floor), condonation_rule_id=crule["rule_id"])
+    if v >= floor:
+        verdict = (f"Only with condonation: {_num(v)}% is below the {_num(t)}% minimum, but a shortage of up to {_num(c)}% can be "
+                   f"condoned on medical grounds, so {_num(v)}% is enough only if your condonation is approved."
+                   if medical else
+                   f"No, not by itself: {_num(v)}% is below the {_num(t)}% minimum. A shortage of up to {_num(c)}% can be "
+                   f"condoned on medical grounds, so {_num(v)}% is enough only if a medical condonation is approved.")
+        return ToolResult("check_attendance_value", inp, {**out, "result": "CONDONABLE"}, decisive=True, rules=[rr, crr],
+                          verdict=verdict)
+    return ToolResult("check_attendance_value", inp, {**out, "result": "BELOW_CONDONABLE_FLOOR"}, decisive=True, rules=[rr, crr],
+                      verdict=f"No: {_num(v)}% is below the {_num(t)}% minimum, and condonation on medical grounds covers a "
+                              f"shortage of at most {_num(c)}%, so attendance must be at least {_num(floor)}%"
+                              f"{' even with a medical certificate' if medical else ''}.")
 
 
 @dataclass(frozen=True)
@@ -315,6 +356,7 @@ TOOLS: dict[str, ToolSpec] = {
     "check_supplementary_eligibility": ToolSpec(check_supplementary_eligibility, "whether the user may register for a course's supplementary exam", True, True),
     "check_placement_eligibility": ToolSpec(check_placement_eligibility, "whether the user may register for placements, optionally assuming courses are cleared", True),
     "attendance_projection": ToolSpec(attendance_projection, "how many of the next N classes the user can miss", True, True),
+    "check_attendance_value": ToolSpec(check_attendance_value, "whether a stated attendance percentage is enough (policy what-if)", False),
 }
 
 

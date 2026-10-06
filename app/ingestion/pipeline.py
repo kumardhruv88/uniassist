@@ -20,7 +20,7 @@ from app.models import IngestMetadata, IngestResponse
 from app.services import Services
 
 log = logging.getLogger("uniassist.ingest")
-SHORT = {"min_attendance_pct": "ATT", "pass_min_total_pct": "PASS", "supplementary_allowed_results": "SUPP",
+SHORT = {"min_attendance_pct": "ATT", "max_condonation_pct": "COND", "pass_min_total_pct": "PASS", "supplementary_allowed_results": "SUPP",
          "min_cgpa_placement": "CGPA", "max_active_backlogs_placement": "BKLG"}
 
 

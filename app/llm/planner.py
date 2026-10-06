@@ -15,7 +15,7 @@ Category = Literal["policy_fact", "procedure", "personal_data", "personal_eligib
 PERSONAL = {"personal_data", "personal_eligibility", "multi_step"}
 ToolName = Literal["get_student_profile", "get_attendance", "get_results", "check_exam_eligibility",
                    "check_supplementary_eligibility", "check_placement_eligibility", "attendance_projection"]
-ParamName = Literal["min_attendance_pct", "pass_min_total_pct", "supplementary_allowed_results",
+ParamName = Literal["min_attendance_pct", "max_condonation_pct", "pass_min_total_pct", "supplementary_allowed_results",
                     "min_cgpa_placement", "max_active_backlogs_placement"]
 
 
@@ -101,6 +101,8 @@ def route(question: str) -> Plan:
     params: list[str] = []
     if hit["attendance"] or hit["eligible"] and not (hit["supplementary"] or hit["placement"]):
         params.append("min_attendance_pct")
+    if re.search(r"condon|medical", q, re.I) and hit["attendance"]:
+        params.append("max_condonation_pct")
     if hit["supplementary"]:
         params.append("supplementary_allowed_results")
     if hit["placement"]:
@@ -154,6 +156,7 @@ def plan_question(llm, question: str) -> tuple[Plan, str, LLMResult | None, list
     system, user = build_prompt(question)
     notes: list[str] = []
     result = None
+    unavailable = False
     for attempt in range(2):
         try:
             result = llm.chat_json("plan", system, user, Plan.model_json_schema(), context={"question": question})
@@ -162,8 +165,11 @@ def plan_question(llm, question: str) -> tuple[Plan, str, LLMResult | None, list
         except (LLMError, ValidationError) as e:
             notes.append(f"plan attempt {attempt + 1} rejected: {str(e)[:160]}")
             plan = None
+            if getattr(e, "kind", None) in ("unavailable", "timeout"):
+                unavailable = True
+                break                                   # the gateway already retried; go straight to the router
     if plan is None:
-        return router, "router", result, notes
+        return router, "router_fallback" if unavailable else "router", result, notes
 
     # Cross-check with the deterministic router: code has the final say on personal intent and tool choice
     # (measured: the 8B planner sometimes picks a plausible-but-wrong tool, e.g. CGPA for an attendance question).
@@ -184,3 +190,23 @@ def plan_question(llm, question: str) -> tuple[Plan, str, LLMResult | None, list
         plan.future_classes = router.future_classes
     plan.search_queries = list(dict.fromkeys([q for q in plan.search_queries if q.strip()] + [question]))[:3]
     return plan, "llm", result, notes
+
+
+# ----------------------------------------------------------------------------- policy what-if
+WHATIF_PCT = re.compile(r"(?<![\d.])(\d{1,3}(?:\.\d+)?)\s*(?:%|per\s?cent\b|percent\b)", re.I)
+MEDICAL = re.compile(r"medical|sick|ill(?:ness)?\b|hospital|doctor", re.I)
+NO_MEDICAL = re.compile(r"\b(?:without|no|not|don'?t|do not|didn'?t|haven'?t|have no|lacking)\b[^.?!]{0,25}?"
+                        r"(?:medical|sick|doctor|hospital)", re.I)
+WHATIF_CUE = re.compile(r"\b(enough|sufficient|ok(?:ay)?|fine|acceptable|allowed|permitted|eligible|qualif\w*|sit|appear|write|take)\b", re.I)
+
+
+def attendance_whatif(question: str) -> dict | None:
+    """'Is 65% attendance enough with a medical certificate?' -> {"value_pct": "65", "medical": True}.
+    Exactly one percentage, about attendance, asked as a yes/no about sitting the exam. Code then decides."""
+    vals = WHATIF_PCT.findall(question)
+    if len(vals) != 1 or not re.search(r"\battendance\b", question, re.I) or not WHATIF_CUE.search(question):
+        return None
+    if not 0 <= float(vals[0]) <= 100:
+        return None
+    medical = bool(MEDICAL.search(question)) and not NO_MEDICAL.search(question)
+    return {"value_pct": vals[0], "medical": medical}

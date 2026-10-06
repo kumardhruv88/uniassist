@@ -63,6 +63,13 @@ def _backlogs(s: str) -> str | None:
     return m.group(1) if m else None
 
 
+def _condonation(s: str) -> str | None:
+    if not re.search(r"\bcondon", s, re.I) or not re.search(r"\b(shortage|attendance)\b", s, re.I):
+        return None
+    vals = {v for v in re.findall(r"up to\s+" + PCT, s, re.I) if 1 <= float(v) <= 30}
+    return vals.pop() if len(vals) == 1 else ("AMBIGUOUS" if vals else None)
+
+
 def _supplementary(s: str) -> str | None:
     if not re.search(r"\bsupplementary\b", s, re.I) or not re.search(r"\b(eligible|may|can|allowed|permitted)\b", s, re.I):
         return None
@@ -78,6 +85,7 @@ def _supplementary(s: str) -> str | None:
 
 EXTRACTORS = [
     ("min_attendance_pct", ">=", "pct", _attendance, re.compile(r"\battendance\b.*\d", re.I)),
+    ("max_condonation_pct", "<=", "pct", _condonation, None),
     ("pass_min_total_pct", ">=", "pct", _pass_mark, None),
     ("min_cgpa_placement", ">=", "cgpa", _cgpa, None),
     ("max_active_backlogs_placement", "<=", "count", _backlogs, None),

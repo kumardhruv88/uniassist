@@ -21,6 +21,8 @@ class ParamSpec:
 
 PARAMETERS: dict[str, ParamSpec] = {p.name: p for p in [
     ParamSpec("min_attendance_pct", "Minimum attendance to sit end-semester exams", "pct", ">=", ("attendance",)),
+    ParamSpec("max_condonation_pct", "Largest attendance shortage that can be condoned on medical grounds", "pct", "<=",
+              ("condonation", "medical")),
     ParamSpec("pass_min_total_pct", "Minimum total marks to pass a course", "pct", ">=", ("pass",)),
     ParamSpec("supplementary_allowed_results", "Results that may register for a supplementary exam", "list", "in", ("supplementary",)),
     ParamSpec("min_cgpa_placement", "Minimum CGPA to register for placements", "cgpa", ">=", ("cgpa", "placement")),
