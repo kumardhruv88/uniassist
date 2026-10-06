@@ -36,11 +36,14 @@ def numbers(text: str) -> set[str]:
 
 def strip_markers(text: str) -> str:
     text = re.sub(r"§+\s*", "section ", text)            # plain words for students, not the section sign
+    text = re.sub(r"\s*\(E\d{1,2}(?:\s*,\s*E\d{1,2})*\)", "", text)        # "(E1, E3)" citation markers
     return re.sub(r"\s{2,}", " ", re.sub(r"\s*\[(?:E\d{1,2}(?:\s*,\s*)?)+\]", "", text)).strip()
 
 
 def check_draft(draft, *, evidence_ids: set[str], allowed_sources: list[str], verdict: str | None,
                 self_id: str | None, needs_citation: bool, personal: bool = True) -> list[str]:
+    """Small whole numbers (1-10) are exempt from grounding only when no verdict was computed: when code has decided
+    the answer, a count in the explanation ("4 subjects with a backlog") must match the records it came from."""
     problems: list[str] = []
     cited = [e for e in draft.evidence_ids if e in evidence_ids]
     bogus = [e for e in draft.evidence_ids if e not in evidence_ids]
@@ -50,7 +53,7 @@ def check_draft(draft, *, evidence_ids: set[str], allowed_sources: list[str], ve
         problems.append("cite at least one evidence id that supports the answer")
     allowed = set().union(*(numbers(s) for s in allowed_sources)) if allowed_sources else set()
     text = f"{draft.answer} {draft.explanation}"
-    unknown = sorted(n for n in numbers(text) if n not in allowed and not (n.isdigit() and int(n) <= 10))
+    unknown = sorted(n for n in numbers(text) if n not in allowed and not (verdict is None and n.isdigit() and int(n) <= 10))
     if unknown:
         problems.append(f"these numbers are not in the verdict, records, rules or evidence: {', '.join(unknown)}")
     if verdict is None and personal and ELIG.search(text):     # a policy answer may quote "not eligible" from a clause
@@ -181,3 +184,17 @@ NEG_WORD = re.compile(r"\b(?:no|not|none|never|cannot|without|optional|exempt\w*
 def unsupported_negative(answer: str, cited_texts: list[str]) -> bool:
     """'You do not need to attend …' when no cited clause says anything negative: a claim the model made up."""
     return bool(NEG_CLAIM.search(answer)) and not any(NEG_WORD.search(t) for t in cited_texts)
+
+
+EVIDENCE_REF = re.compile(r"\b(?:the\s+)?(?:evidence|source|document)\s+(?:block\s+)?(?:from\s+|in\s+)?(E\d{1,2})\b", re.I)
+
+
+def name_evidence(text: str, titles: dict[str, str]) -> str:
+    """Students never see internal labels: 'according to evidence E2' -> 'according to the Academic Regulations ...'."""
+    def title(m: re.Match) -> str:
+        return titles.get(m.group(1).upper(), "the cited document")
+    text = re.sub(r"\s*[\[(](?:E\d{1,2}(?:\s*,\s*)?)+[\])]", "", text)      # bare citation markers go, not renamed
+    text = EVIDENCE_REF.sub(title, text)
+    text = re.sub(r"\b(E\d{1,2})\b", title, text)
+    text = re.sub(r"\b(\w[^.,;]{5,90}?) and \1\b", r"\1", text)               # "X and X" after two ids from one document
+    return re.sub(r"(^|[.!?]\s+)([a-z])", lambda m: m.group(1) + m.group(2).upper(), text)   # sentence starts stay capitalised

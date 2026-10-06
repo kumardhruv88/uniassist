@@ -165,6 +165,9 @@ Each item names the technique used. `[x]` built and tested, `[~]` in progress, `
 - [x] "what subjects i have backlogs in … total number of subjects" answered: the profile tool now lists backlog subjects and every course on record; informal "<subjects> i have" phrasing and subject-list questions route to it
 - [x] Students page says the 40 synthetic students are already loaded, so nothing needs uploading for the demo
 
+- [x] An AI explanation can no longer contradict a computed answer: when code has decided the answer, every number in the explanation (small counts included) must match the records ("0 backlogs" vs "4 subjects with a backlog" is now rejected and rewritten)
+- [x] Internal evidence labels never reach students: "according to evidence E2" becomes "according to the Academic Regulations"
+
 ### Project explainer
 - [x] `docs/UNIASSIST_EXPLAINED.md/.pdf`: the whole project in five plain-language pages (what it does, how a question is answered, conflicts, safety and honesty, proof and results, running it), with two diagrams and three live screenshots
 - [x] Dates written in the question set `as_of` when the request has none ("As of 2026-12-10", "in October 2026")

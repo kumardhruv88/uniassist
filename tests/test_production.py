@@ -371,3 +371,26 @@ def test_subject_list_questions_use_the_profile(client):
     a = ask(client, "what subjects i have backlogs in also tell me total number of subjects i have", "S1001")
     out = a["tools_invoked"][0]["output"]
     assert a["answer_type"] == "calculated" and out["total_courses"] == 2 and "courses" in out and "backlog_courses" in out
+
+
+def test_explanation_cannot_contradict_a_computed_verdict():
+    from app.graph.verify import check_draft, strip_markers
+    from app.llm.composer import ComposerOutput
+    d = ComposerOutput(evidence_ids=["E2"], answer="x", explanation="You have 4 subjects with a backlog.",
+                       insufficient_evidence=False, unanswered_parts=[], disagreeing_pairs=[])
+    facts = ['get_student_profile: {"active_backlogs":0,"total_courses":5}']
+    probs = check_draft(d, evidence_ids={"E2"}, allowed_sources=facts, verdict="You have 0 active backlogs.",
+                        self_id="S1030", needs_citation=False)
+    assert any("4" in p for p in probs)                                   # a count the records do not support
+    probs = check_draft(d, evidence_ids={"E2"}, allowed_sources=facts, verdict=None, self_id="S1030", needs_citation=False)
+    assert not any("numbers" in p for p in probs)                         # small numbers stay exempt without a verdict
+    from app.graph.verify import name_evidence
+    assert "E2" not in name_evidence("as stated by evidence E2, a course is a backlog", {"E2": "the Academic Regulations"})
+
+
+def test_evidence_labels_become_document_titles():
+    from app.graph.verify import name_evidence
+    t = {"E1": "the Academic Regulations", "E2": "the Academic Regulations"}
+    out = name_evidence("According to evidence E1, you pass. Evidence E2 states the rule [E1].", t)
+    assert "E1" not in out and "E2" not in out and "evidence" not in out.lower()
+    assert out.startswith("According to the Academic Regulations") and "The Academic Regulations states" in out

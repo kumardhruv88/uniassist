@@ -24,8 +24,8 @@ from pydantic import ValidationError
 from app import audit, cache, metrics
 from app.conversation import Turn, contextualize, sessions
 from app.db import data_version, one, rows, session
-from app.graph.verify import (check_draft, evidence_coverage, groundedness, infer_citations, numbers, says_not_covered,
-                              sources_for_grounding, strip_markers, unsupported_negative)
+from app.graph.verify import (check_draft, evidence_coverage, groundedness, infer_citations, name_evidence, numbers,
+                              says_not_covered, sources_for_grounding, strip_markers, unsupported_negative)
 from app.ingestion.injection import redact
 from app.llm.client import LLMError
 from app.llm.composer import ComposerOutput, build_prompt, facts_from_tools
@@ -426,6 +426,11 @@ def build_graph(svc: Services):
                     text_tie.append((by_id[x], by_id[y]))
         if draft and not fallback and not decisive and not draft.insufficient_evidence and says_not_covered(draft.answer, cited_text):
             draft.insufficient_evidence = True          # "there is no scholarship mentioned …" is not a retrieved fact
+
+        titles = {e.eid: e.title for e in evidence}
+        if draft is not None:                       # internal labels (E1, "evidence E2") become document titles
+            draft.answer = name_evidence(draft.answer, titles)
+            draft.explanation = name_evidence(draft.explanation, titles)
 
         cite_ids: list[str] = []
         options: list[str] = []
