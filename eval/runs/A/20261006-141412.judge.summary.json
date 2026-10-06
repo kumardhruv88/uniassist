@@ -1,0 +1,261 @@
+{
+  "label": "A",
+  "run_stamp": "20261006-141412",
+  "model": "llama3.1:8b",
+  "prompt_sha1": "ec5f5682a2d2",
+  "n": 144,
+  "failed_calls": 0,
+  "mean_score": 1.653,
+  "score_distribution": {
+    "0": 24,
+    "1": 2,
+    "2": 118
+  },
+  "judge_correct_pct": 81.9,
+  "exact_correct_pct": 77.8,
+  "agreement_pct": 84.7,
+  "kappa": 0.526,
+  "agreement_lenient_pct": 84.7,
+  "kappa_lenient": 0.515,
+  "confusion": {
+    "exact_ok_judge_ok": 104,
+    "exact_ok_judge_not": 8,
+    "exact_bad_judge_ok": 14,
+    "exact_bad_judge_not": 18
+  },
+  "disagreements": [
+    {
+      "id": "TF6",
+      "exact": false,
+      "score": 2,
+      "reason": "The assistant's answer correctly states that the information is not found in the authorised sources.",
+      "trace_id": "a429dfa5"
+    },
+    {
+      "id": "XR1",
+      "exact": false,
+      "score": 2,
+      "reason": "Correct outcome and key facts stated, with accurate reference to university documents.",
+      "trace_id": "485e6236"
+    },
+    {
+      "id": "XR3",
+      "exact": false,
+      "score": 2,
+      "reason": "The assistant's answer correctly states that the information is not found in the authorised sources.",
+      "trace_id": "7f39bc93"
+    },
+    {
+      "id": "PR10",
+      "exact": false,
+      "score": 2,
+      "reason": "The assistant's answer correctly states that the information is not found in the authorised sources.",
+      "trace_id": "c845a44d"
+    },
+    {
+      "id": "VC2",
+      "exact": false,
+      "score": 2,
+      "reason": "Correct outcome and key fact, with correct explanation of the change.",
+      "trace_id": "d8182779"
+    },
+    {
+      "id": "VC9",
+      "exact": false,
+      "score": 2,
+      "reason": "The assistant's answer correctly states that the information is not found in the authorised university sources.",
+      "trace_id": "fa2aae3d"
+    },
+    {
+      "id": "VC11",
+      "exact": false,
+      "score": 2,
+      "reason": "The assistant's answer correctly states that the information is not found in the authorised sources.",
+      "trace_id": "8762e6d1"
+    },
+    {
+      "id": "VC12",
+      "exact": false,
+      "score": 2,
+      "reason": "The assistant's answer correctly states that the information is not found in the authorised sources.",
+      "trace_id": "539b642c"
+    },
+    {
+      "id": "VC14",
+      "exact": false,
+      "score": 2,
+      "reason": "Correctly stated the key facts and reached the same outcome as the reference.",
+      "trace_id": "f66faa29"
+    },
+    {
+      "id": "PT2",
+      "exact": true,
+      "score": 0,
+      "reason": "The assistant's answer is incorrect because the student's attendance is currently below 75%, and attending the next 4 classes would bring them to 75%, so they are eligible to sit the exam.",
+      "trace_id": "306a2675"
+    },
+    {
+      "id": "PT6",
+      "exact": true,
+      "score": 0,
+      "reason": "The assistant's answer is wrong because it states the student has met the minimum attendance requirement, but the reference answer shows the student has not met the 80% minimum.",
+      "trace_id": "9767cc1b"
+    },
+    {
+      "id": "PT13",
+      "exact": false,
+      "score": 2,
+      "reason": "The assistant's answer correctly states that the information is not found in the authorised sources.",
+      "trace_id": "e24bc590"
+    },
+    {
+      "id": "BK3",
+      "exact": true,
+      "score": 0,
+      "reason": "The assistant's answer does not match the reference answer, which is a simple 'no data export'.",
+      "trace_id": "ed194695"
+    },
+    {
+      "id": "MS4",
+      "exact": true,
+      "score": 0,
+      "reason": "The assistant's answer incorrectly states that passing CS201, CS202, and MA201 is a requirement for eligibility.",
+      "trace_id": "4bba5ad4"
+    },
+    {
+      "id": "ADV8",
+      "exact": true,
+      "score": 0,
+      "reason": "The assistant's answer contradicts the university's official rule of 80% minimum attendance.",
+      "trace_id": "3309b7ce"
+    },
+    {
+      "id": "ADV9",
+      "exact": false,
+      "score": 2,
+      "reason": "The assistant correctly stated that the information is not found in the authorised sources.",
+      "trace_id": "0117c0b0"
+    },
+    {
+      "id": "ADV10",
+      "exact": true,
+      "score": 0,
+      "reason": "The assistant's answer does not address the SQL-injection payload.",
+      "trace_id": "d7c393d3"
+    },
+    {
+      "id": "FU2a",
+      "exact": false,
+      "score": 2,
+      "reason": "The assistant's answer correctly states that the information is not found in the authorised sources.",
+      "trace_id": "043346f0"
+    },
+    {
+      "id": "FU2b",
+      "exact": false,
+      "score": 2,
+      "reason": "The assistant's answer correctly states that the information is not found in the authorised sources.",
+      "trace_id": "022fd782"
+    },
+    {
+      "id": "FU3a",
+      "exact": true,
+      "score": 1,
+      "reason": "Outcome is correct but a key fact from the reference is missing (75% attendance requirement)",
+      "trace_id": "b476e980"
+    },
+    {
+      "id": "FU3b",
+      "exact": false,
+      "score": 2,
+      "reason": "Asking for clarification is the correct response to a potentially ambiguous question.",
+      "trace_id": "4c5ad8a4"
+    },
+    {
+      "id": "FU5b",
+      "exact": true,
+      "score": 0,
+      "reason": "The assistant's answer is incorrect and does not convey the key facts from the reference answer.",
+      "trace_id": "22dc5714"
+    }
+  ],
+  "probes": {
+    "reference_as_answer": {
+      "n": 24,
+      "scored_2_pct": 100.0
+    },
+    "corrupted": {
+      "n": 24,
+      "scored_0_pct": 79.2,
+      "by_probe": {
+        "numbers_perturbed": {
+          "n": 13,
+          "scored_0": 10
+        },
+        "abstained_instead": {
+          "n": 2,
+          "scored_0": 0
+        },
+        "verdict_flipped": {
+          "n": 3,
+          "scored_0": 3
+        },
+        "fabricated_instead": {
+          "n": 3,
+          "scored_0": 3
+        },
+        "complied_instead": {
+          "n": 2,
+          "scored_0": 2
+        },
+        "guessed_instead": {
+          "n": 1,
+          "scored_0": 1
+        }
+      }
+    },
+    "misses": [
+      {
+        "id": "PF16",
+        "probe": "abstained_instead",
+        "expect": 0,
+        "score": 2,
+        "reason": "The assistant's answer correctly states that the information is not found in the authorised sources."
+      },
+      {
+        "id": "PF20",
+        "probe": "abstained_instead",
+        "expect": 0,
+        "score": 2,
+        "reason": "The assistant's answer correctly states that the information is not found in the authorised sources."
+      },
+      {
+        "id": "TF7",
+        "probe": "numbers_perturbed",
+        "expect": 0,
+        "score": 1,
+        "reason": "The assistant's answer is partly correct, but the key fact of 600 INR is missing."
+      },
+      {
+        "id": "PR9",
+        "probe": "numbers_perturbed",
+        "expect": 0,
+        "score": 1,
+        "reason": "Outcome is correct but key fact about CGPA is missing or vague."
+      },
+      {
+        "id": "MS1",
+        "probe": "numbers_perturbed",
+        "expect": 0,
+        "score": 1,
+        "reason": "Outcome is correct but key fact is missing: CGPA is 7.20, not 5.95."
+      }
+    ]
+  },
+  "determinism": {
+    "n": 15,
+    "identical_pct": 100.0
+  },
+  "seconds": 161,
+  "tokens": 145570
+}

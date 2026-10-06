@@ -86,8 +86,23 @@ def perturb_numbers(text: str) -> str:
     return re.sub(r"(?<![\w.])\d+(?:\.\d+)?(?![\w])", swap, re.sub(r"(?<=\d),(?=\d{3}\b)", "", text or ""))
 
 
+FLIPS = [("You are not eligible", "You are eligible"), ("You are eligible", "You are not eligible"),
+         ("you are not eligible", "you are eligible"), ("you are eligible", "you are not eligible"),
+         ("You cannot", "You can"), ("You can ", "You cannot "), ("would still not be", "would be"), ("would be", "would not be"),
+         ("No,", "Yes,"), ("Yes,", "No,"), ("No:", "Yes:"), ("Yes:", "No:"), ("not ", "")]
+
+
+def flip_verdict(text: str) -> str:
+    for a, b in FLIPS:
+        if a in text:
+            return text.replace(a, b, 1)
+    return text
+
+
 def probes(rows: list[dict], n: int) -> list[dict]:
-    """Reference-as-answer (expect 2) and a type-appropriate corruption of a correct answer (expect 0)."""
+    """Reference-as-answer (expect 2) and a type-appropriate corruption of a correct answer (expect 0).
+    A corruption must change the text: numbers are perturbed (course codes such as CS101 are left alone), else the
+    verdict is flipped, else the item gets no corruption probe."""
     pool = [r for r in rows if r.get("correct") and r.get("reference") and not r.get("skipped")]
     step = max(1, len(pool) // max(1, n))
     picked = pool[::step][:n]
@@ -98,9 +113,13 @@ def probes(rows: list[dict], n: int) -> list[dict]:
         out.append({"id": r["id"], "probe": "reference_as_answer", "expect": 2, "answer_type": main,
                     "answer": r["reference"], "explanation": ""})
         if main in ANSWERED:
-            if re.search(r"\d", r.get("answer") or ""):
+            ans, expl = r.get("answer") or "", r.get("explanation") or ""
+            if perturb_numbers(ans) != ans:
                 out.append({"id": r["id"], "probe": "numbers_perturbed", "expect": 0, "answer_type": r["answer_type"],
-                            "answer": perturb_numbers(r["answer"]), "explanation": perturb_numbers(r.get("explanation") or "")})
+                            "answer": perturb_numbers(ans), "explanation": perturb_numbers(expl)})
+            elif flip_verdict(ans) != ans:
+                out.append({"id": r["id"], "probe": "verdict_flipped", "expect": 0, "answer_type": r["answer_type"],
+                            "answer": flip_verdict(ans), "explanation": ""})
             else:
                 out.append({"id": r["id"], "probe": "abstained_instead", "expect": 0, "answer_type": "not_found",
                             "answer": NOT_FOUND, "explanation": "No authorised document in force answers this question."})

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -99,6 +100,11 @@ def likely_cause(r: dict, tau: float | None) -> str:
     reasons = r.get("reasons") or []
     if got == "error":
         return f"HTTP {r.get('http_status')} from the API"
+    unavailable = [t["tool"] for t in ((r.get("response") or {}).get("tools") or [])
+                   if (t.get("output") or {}).get("result") in ("RULE_UNAVAILABLE", "RULE_CONFLICT")]
+    if unavailable and not r.get("tool_ok", True) is True:
+        return (f"rule not in the registry for this date ({unavailable[0]} returned RULE_UNAVAILABLE), so code could not "
+                "decide and the LLM answered from text")
     if r.get("repeat_of") and r.get("meta_ok") is False:
         return "answer cache did not serve the identical repeat (cache off or the first answer was not cacheable)"
     if (r.get("turn") or 1) > 1 and not r["type_ok"]:
@@ -193,18 +199,28 @@ def main() -> int:
     w("## 1. Summary and final choice")
     w("")
     # Run-to-run noise: the spread of correctness between repeated full runs of the same label on the same dataset.
-    spreads = []
+    spreads, lat_spreads = [], []
     for l in labs:
         same = [r for r in list_runs(l) if r.get("kind", "full") == "full" and r.get("dataset_sha1")
                 and r.get("dataset_sha1") == runs[l].get("dataset_sha1") and r.get("answer_correctness_pct") is not None]
         if len(same) >= 2:
             vals = [r["answer_correctness_pct"] for r in same]
             spreads.append((l, len(same), max(vals) - min(vals)))
+            lats = [r["latency_p50_ms"] for r in same if r.get("latency_p50_ms")]
+            if len(lats) >= 2:
+                lat_spreads.append((l, max(lats) - min(lats)))
     one_item = 100 / max(1, max(runs[l].get("items") or 1 for l in labs))
     band = max([one_item] + [sp for _, _, sp in spreads]) + 0.1      # + 0.1: summaries round percentages to 1 decimal
     top = max(runs[l].get("answer_correctness_pct") or 0 for l in labs)
     tied = [l for l in labs if (runs[l].get("answer_correctness_pct") or 0) >= top - band - 1e-9]
-    best = min(tied, key=lambda l: (runs[l].get("latency_p50_ms") or 1e9, -(runs[l].get("answer_correctness_pct") or 0)))
+    fastest = min(runs[l].get("latency_p50_ms") or 1e9 for l in tied)
+    lat_band = max([0.10 * fastest] + [sp for _, sp in lat_spreads])
+    lat_tied = [l for l in tied if (runs[l].get("latency_p50_ms") or 1e9) <= fastest + lat_band]
+
+    def components(l: str) -> int:
+        c = runs[l].get("config_audit") or {}
+        return int((c.get("reranker") or "none").lower() != "none") + int(c.get("retrieval_mode") == "hybrid")
+    best = min(lat_tied, key=lambda l: (components(l), runs[l].get("latency_p50_ms") or 1e9))
     lines = []
     for l in labs:
         s = runs[l]
@@ -228,12 +244,19 @@ def main() -> int:
                           f"citation accuracy {d('citation_accuracy_pct')}, abstention {d('abstention_accuracy_pct')}, "
                           f"tool results {d('tool_result_correctness_pct')}, p50 latency {d('latency_p50_ms', 'ms')}")
         noise_txt = ("; ".join(f"{l} run {n}× on this dataset: correctness spread {sp:.1f} pp" for l, n, sp in spreads)
+                     + "".join(f", p50 latency spread {ls:.0f} ms" for l2, ls in lat_spreads)
                      or "no configuration has been run twice on this dataset yet")
-        rule = (f"Decision rule: configurations whose correctness is within the noise band of the best ({band:.1f} pp = the "
-                f"larger of one item and the observed run-to-run spread; {noise_txt}) count as tied, and among tied "
-                f"configurations the one with the lower p50 latency wins (fewer moving parts at equal quality).")
-        why = (f"{best} has the highest correctness" if len(tied) == 1 else
-               f"{', '.join(tied)} are tied within {band:.1f} pp, and {best} is the fastest of them")
+        rule = (f"Decision rule: (1) configurations whose correctness is within the noise band of the best ({band:.1f} pp = the "
+                f"larger of one item and the observed run-to-run spread; {noise_txt}) count as tied; (2) among those, p50 "
+                f"latencies within {lat_band:.0f} ms of the fastest (the larger of 10% and the observed latency spread) count as "
+                f"tied; (3) among those, the configuration with fewer retrieval components (hybrid search, reranker) wins.")
+        if len(tied) == 1:
+            why = f"{best} has the highest correctness"
+        elif len(lat_tied) > 1:
+            why = (f"{', '.join(tied)} are tied on correctness (within {band:.1f} pp) and on latency (within {lat_band:.0f} ms), "
+                   f"and {best} has the fewest moving parts")
+        else:
+            why = f"{', '.join(tied)} are tied on correctness (within {band:.1f} pp) and {best} is clearly faster"
         w(f"**Final choice: {best}** — {why}. " + "; ".join(deltas) + ".")
         w("")
         w(rule)
@@ -311,10 +334,13 @@ def main() -> int:
          "(reference → 2, corrupted answers → 0) and a determinism re-run."],
     ]))
     w("")
-    w("Caveats: one run per configuration on a shared local Ollama (latency has run-to-run noise of roughly ±15%); the "
-      "baseline's τ is tuned on the same items it is evaluated on (the leave-one-out estimate in §7 corrects for this); "
-      "items that need OCR are skipped when the scanned notice is not indexed; LLM-response and semantic caches are off "
-      "during configuration runs so every question pays for its own LLM calls.")
+    rep = "; ".join(f"{l} was run {n}× (correctness spread {sp:.1f} pp" + "".join(f", p50 spread {ls:.0f} ms" for l2, ls in lat_spreads if l2 == l) + ")"
+                    for l, n, sp in spreads)
+    w("Caveats: runs use a shared local Ollama, so latency moves between runs"
+      + (f" ({rep})" if rep else "") + "; most configurations were run once. The baseline's τ is tuned on the same items it "
+      "is evaluated on (the leave-one-out estimate in §7 corrects for this). Items that need OCR are skipped when the "
+      "scanned notice is not indexed. LLM-response and semantic caches are off during configuration runs so every question "
+      "pays for its own LLM calls; the exact answer cache stays on for the cache items.")
     w("")
 
     # ------------------------------------------------------------------ configs
@@ -491,11 +517,21 @@ def main() -> int:
     w(f"**{primary}**: {len(fails)} of {len([r for r in rows[primary] if not r.get('skipped')])} items fail"
       + (f"; {len(skipped)} skipped ({', '.join(r['id'] + ': ' + r.get('skip_reason', '') for r in skipped)})" if skipped else "") + ".")
     w("")
+    analysis_path = HERE / "failure_analysis.yaml"
+    analysis = yaml.safe_load(analysis_path.read_text()) if analysis_path.exists() else {}
     if fails:
-        w(table(["Item", "Bucket", "trace_id", "Got", "Likely cause", "Failed checks"],
-                [[r["id"], r["bucket"], f"`{r.get('trace_id') or '–'}`", r["answer_type"], esc(likely_cause(r, tau_p)),
-                  esc("; ".join(r.get("reasons") or [])[:180])] for r in fails]))
+        w(table(["Item", "Bucket", "trace_id", "Got", "Failed checks", "Cause"],
+                [[r["id"], r["bucket"], f"`{r.get('trace_id') or '–'}`", r["answer_type"],
+                  esc("; ".join(r.get("reasons") or [])[:160]),
+                  esc((analysis.get(r["id"]) or {}).get("cause") or likely_cause(r, tau_p))] for r in fails]))
         w("")
+        fixes = [(r["id"], (analysis.get(r["id"]) or {}).get("fix")) for r in fails if (analysis.get(r["id"]) or {}).get("fix")]
+        if fixes:
+            w("Suggested fixes (from `eval/failure_analysis.yaml`, written after reading each audit record; causes without an "
+              "entry there are inferred automatically from the response):")
+            w("")
+            w("\n".join(f"- **{i}**: {esc(f)}" for i, f in fixes))
+            w("")
     for l in labs:
         if l == primary:
             continue
@@ -506,7 +542,7 @@ def main() -> int:
         w(f"**{l}**: {len(fl)} failures. Pass in {primary} but fail in {l}: {', '.join(sorted(ok_p - ok_l)) or 'none'}. "
           f"Pass in {l} but fail in {primary}: {', '.join(sorted(ok_l - ok_p)) or 'none'}.")
         w("")
-        causes = Counter(likely_cause(r, tau_l).split(":")[0] for r in fl)
+        causes = Counter(re.sub(r"\s*\([^)]*\)", "", likely_cause(r, tau_l).split(":")[0]).strip() for r in fl)
         w(f"<details><summary>{l}: failures by likely cause</summary>\n")
         w(table(["Likely cause", "Items"], [[esc(c), n] for c, n in causes.most_common()]))
         w("")
@@ -552,7 +588,13 @@ def main() -> int:
         if pr.get("misses"):
             w(f"Probe misses ({l}): " + "; ".join(f"{m['id']} {m['probe']} expected {m['expect']} got {m['score']}" for m in pr["misses"]) + ".")
             w("")
-    if not any_judge:
+    if any_judge:
+        w("Reading the judge numbers: exact match stays the primary grade. Kappa is depressed by the skewed base rate "
+          "(most answers are correct), so the disagreement list and the probes are the useful part: a probe category that "
+          "does not score 0 is a blind spot of the 8B judge, and disagreements in that category should be settled in "
+          "favour of the exact-match grade after reading the answer.")
+        w("")
+    else:
         w("Not run yet: `make judge` (needs Ollama; run it when no evaluation is using the model).")
         w("")
 
@@ -567,7 +609,8 @@ def main() -> int:
     w("")
     w("```bash\nmake test                                  # pytest\nuv run python eval/verify_golden.py        # expected values vs documents + CSVs\n"
       "uv run python eval/run_config.py A        # private instance: seed, calibrate τ, run, clean up\n"
-      "uv run python eval/run_config.py B        # same flags, shipped defaults\nmake judge                                 # LLM-as-judge on B\n"
+      "uv run python eval/run_config.py B        # same flags, shipped defaults\n"
+      "uv run python eval/run_config.py C        # B + cross-encoder reranker\nmake judge                                 # LLM-as-judge on B\n"
       "make report                                # this file\nmake eval                                  # golden set on the API at $API (default :8000) + report\n```")
     w("")
     history = []
